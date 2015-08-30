@@ -225,10 +225,28 @@ static int insert(map_t* p_map, void* p_key, void* p_value)
     p_map->mod_count++;
     return (EXIT_SUCCESS);
 }
+
 static map_entry_t* min_entry(map_entry_t* p_entry)
 {
     while (p_entry->p_left) p_entry = p_entry->p_left;
     return p_entry;
+}
+
+static map_entry_t* get_successor_entry(map_entry_t* p_entry)
+{
+    map_entry_t* p_parent;
+    
+    if (p_entry->p_right) return min_entry(p_entry->p_right);
+        
+    p_parent = p_entry->p_parent;
+    
+    while (p_parent && p_parent->p_right == p_entry)
+    {
+        p_entry = p_parent;
+        p_parent = p_parent->p_parent;
+    }
+    
+    return p_parent;
 }
 
 static map_entry_t* delete_entry(map_t* p_map, map_entry_t* p_entry)
@@ -488,4 +506,46 @@ void map_t_free(map_t* p_map)
 int map_t_size(map_t* p_map) 
 {
     return p_map ? p_map->size : -1;
+}
+
+map_iterator_t* map_iterator_t_alloc(map_t* p_map)
+{
+    if (!p_map) return NULL;
+    map_iterator_t* p_iterator = malloc(sizeof(*p_iterator));
+    p_iterator->expected_mod_count = p_map->mod_count;
+    p_iterator->iterated_count = 0;
+    p_iterator->p_map = p_map;
+    p_iterator->p_next = min_entry(p_map->p_root);
+    return p_iterator;
+}
+
+int map_iterator_t_has_next(map_iterator_t* p_iterator) 
+{
+    if (!p_iterator)        return FALSE;
+    if (!p_iterator->p_map) return FALSE;
+    
+    /** If the map was modified, stop iteration. */
+    if (map_iterator_t_is_disturbed(p_iterator)) return FALSE;
+    
+    return p_iterator->iterated_count < p_iterator->p_map->size;
+}
+
+void* map_iterator_t_next(map_iterator_t* p_iterator)
+{
+    map_entry_t* p_ret;
+    
+    if (!p_iterator)        return NULL;
+    if (!p_iterator->p_map) return NULL;
+    
+    p_ret = p_iterator->p_next;
+    p_iterator->p_next = get_successor_entry(p_iterator->p_next);
+    return p_ret;
+}
+
+int map_iterator_t_is_disturbed(map_iterator_t* p_iterator) 
+{
+    if (!p_iterator)        return FALSE;
+    if (!p_iterator->p_map) return FALSE;
+    
+    return p_iterator->expected_mod_count != p_iterator->p_map->mod_count;
 }
