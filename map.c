@@ -536,10 +536,12 @@ void* map_iterator_t_next(map_iterator_t* p_iterator)
     
     if (!p_iterator)        return NULL;
     if (!p_iterator->p_map) return NULL;
+    if (map_iterator_t_is_disturbed(p_iterator)) return NULL;
     
     p_ret = p_iterator->p_next;
+    p_iterator->iterated_count++;
     p_iterator->p_next = get_successor_entry(p_iterator->p_next);
-    return p_ret;
+    return p_ret->p_key;
 }
 
 int map_iterator_t_is_disturbed(map_iterator_t* p_iterator) 
