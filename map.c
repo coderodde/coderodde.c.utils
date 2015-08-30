@@ -1,6 +1,9 @@
 #include "map.h"
 #include <stdlib.h>
 
+#define FALSE 0
+#define TRUE (~FALSE)
+
 /*******************************************************************************
 * Creates a new map entry and initializes its fields.                          *
 *******************************************************************************/  
@@ -42,14 +45,6 @@ static int height(map_entry_t* p_node)
 static int max(int a, int b) 
 {
     return a > b ? a : b;
-}
-
-/*******************************************************************************
-* Returns the absolute value of an integer.                                    *
-*******************************************************************************/  
-static int myabs(int a) 
-{
-    return a < 0 ? -a : a;
 }
 
 /*******************************************************************************
@@ -120,7 +115,9 @@ static map_entry_t* left_right_rotate(map_entry_t* p_node_1)
 * parent node that is unbalanced is rotated and algorithm terminates, since    *
 * after addition at most one rotation is enough for making the tree balanced.  *  
 *******************************************************************************/  
-static void fix_after_insertion(map_t* p_map, map_entry_t* p_entry)
+static void fix_after_modification(map_t* p_map, 
+                                   map_entry_t* p_entry,
+                                   int insertion_mode)
 {
     map_entry_t* p_parent = p_entry->p_parent;
     map_entry_t* p_grand_parent;
@@ -149,7 +146,8 @@ static void fix_after_insertion(map_t* p_map, map_entry_t* p_entry)
                 p_grand_parent->height = 
                         max(height(p_grand_parent->p_left),
                                    height(p_grand_parent->p_right)) + 1;
-            return;
+            
+            if (insertion_mode) return;
         }
         
         if (height(p_parent->p_right) == height(p_parent->p_left) + 2) 
@@ -173,7 +171,8 @@ static void fix_after_insertion(map_t* p_map, map_entry_t* p_entry)
                 p_grand_parent->height = 
                         max(height(p_grand_parent->p_left),
                             height(p_grand_parent->p_right)) + 1;
-            return;
+            
+            if (insertion_mode) return;
         }
         
         p_parent->height = max(height(p_parent->p_left),
@@ -218,8 +217,92 @@ static int insert(map_t* p_map, void* p_key, void* p_value)
     else
         p_parent->p_right = p_new_entry;
     
-    fix_after_insertion(p_map, p_new_entry);
+    /** TRUE means we choose the insertion mode for fixing the tree. */
+    fix_after_modification(p_map, p_new_entry, TRUE);
+    p_map->size++;
+    p_map->mod_count++;
     return (EXIT_SUCCESS);
+}
+static map_entry_t* min_entry(map_entry_t* p_entry)
+{
+    while (p_entry->p_left) p_entry = p_entry->p_left;
+    return p_entry;
+}
+
+static map_entry_t* delete_entry(map_t* p_map, map_entry_t* p_entry)
+{
+    map_entry_t* p_parent;
+    map_entry_t* p_child;
+    map_entry_t* p_successor;
+    
+    if (!p_entry->p_left && !p_entry->p_right)
+    {
+        /** The node to delete has no children. */
+        p_parent = p_entry->p_parent;
+        
+        if (!p_parent) 
+        {
+            p_map->p_root = NULL;
+            p_map->size--;
+            p_map->mod_count++;
+            return p_entry;
+        }
+        
+        if (p_entry == p_parent->p_left) 
+            p_parent->p_left = NULL;
+        else
+            p_parent->p_right = NULL;
+        
+        p_map->size--;
+        p_map->mod_count++;
+        return p_entry;
+    }
+    
+    if (!p_entry->p_left || !p_entry->p_right)
+    {
+        /** The node has exactly one child. */
+        if (p_entry->p_left)
+            p_child = p_entry->p_left;
+        else
+            p_child = p_entry->p_right;
+        
+        p_parent = p_entry->p_parent;
+        p_child->p_parent = p_parent;
+        
+        if (!p_parent) 
+        {
+            p_map->p_root = p_parent;
+            return p_entry;
+        }
+        
+        if (p_entry == p_parent->p_left)
+            p_parent->p_left = p_child;
+        else 
+            p_parent->p_right = p_child;
+        
+        p_map->size--;
+        p_map->mod_count++;
+        return p_entry;
+    }
+    
+    /** The node to remove has both children. */
+    p_successor      = min_entry(p_entry->p_right);
+    p_entry->p_key   = p_successor->p_key;
+    p_entry->p_value = p_successor->p_value;
+    p_child          = p_successor->p_right;
+    p_parent         = p_successor->p_parent;
+    
+    if (p_parent->p_left == p_successor)
+        p_parent->p_left = p_child;
+    else
+        p_parent->p_right = p_child;
+    
+    if (p_child)
+        p_child->p_parent = p_parent;
+    
+    p_map->size--;
+    p_map->mod_count++;
+    return p_successor;
 }
 
 /*******************************************************************************
@@ -275,12 +358,7 @@ void* map_t_put(map_t* p_map, void* p_key, void* p_value)
         return p_old_value; 
     } 
     
-    if (insert(p_map, p_key, p_value) == EXIT_SUCCESS) 
-    {
-        p_map->size++;
-        p_map->mod_count++;
-    }
-
+    insert(p_map, p_key, p_value);
     return NULL;
 }
 
@@ -292,29 +370,48 @@ int map_t_contains_key (map_t* p_map, void* p_key)
     return find_entry(p_map, p_key) ? 1 : 0;
 }
 
-void*  map_t_get(map_t* p_map, void* p_key)
+void* map_t_get(map_t* p_map, void* p_key)
 {
     map_entry_t* p_entry;
     
-    if (!p_map)               return 0;
-    if (!p_map->p_comparator) return 0;
+    if (!p_map)               return NULL;
+    if (!p_map->p_comparator) return NULL;
     
     p_entry = find_entry(p_map, p_key);
     return p_entry ? p_entry->p_value : NULL;
 }
 
+void* map_t_remove(map_t* p_map, void* p_key)
+{
+    map_entry_t* p_entry;
+    
+    if (!p_map)               return NULL;
+    if (!p_map->p_comparator) return NULL;
+    
+    p_entry = find_entry(p_map, p_key);
+    
+    if (!p_entry) return NULL;
+    
+    p_entry = delete_entry(p_map, p_entry);
+    fix_after_modification(p_map, p_entry, FALSE);
+    return p_entry->p_value;
+}
+
+/*******************************************************************************
+* This routine implements the actual checking of tree balance.                 *
+*******************************************************************************/  
 static int check_balance_factors_impl(map_entry_t* p_entry)
 {
     if (!p_entry) return 1;
-    
     if (abs(height(p_entry->p_left) - height(p_entry->p_right)) > 1) return 0;
-    
     if (!check_balance_factors_impl(p_entry->p_left))  return 0;
     if (!check_balance_factors_impl(p_entry->p_right)) return 0;
-    
     return 1;
 }
 
+/*******************************************************************************
+* Checks that every node in the map is balanced.                               *
+*******************************************************************************/  
 static int check_balance_factors(map_t* p_map) 
 {
     return check_balance_factors_impl(p_map->p_root);

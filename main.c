@@ -20,8 +20,20 @@ int main(int argc, char** argv) {
         printf("%3d: %3d (%d)\n", i, map_t_contains_key(p_map, i), map_t_get(p_map, i));
 
     printf("Healthy: %d\n", map_t_is_healthy(p_map));
+    printf("Size: %d\n", p_map->size);
     
-    printf("Root height: %d\n", p_map->p_root->height);
+    puts("");
+    puts("AFTER REMOVAL");
+    puts("");
+    
+    for (i = 30; i < 55; ++i) 
+        map_t_remove(p_map, (void*) i);
+    
+    for (i = -10; i < 110; ++i) 
+        printf("%3d: %3d (%d)\n", i, map_t_contains_key(p_map, i), map_t_get(p_map, i));
+
+    printf("Healthy: %d\n", map_t_is_healthy(p_map));
+    printf("Size: %d\n", p_map->size);
     
     return (EXIT_SUCCESS);
 }
