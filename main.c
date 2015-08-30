@@ -34,7 +34,10 @@ int main(int argc, char** argv) {
 
     printf("Healthy: %d\n", map_t_is_healthy(p_map));
     printf("Size: %d\n", p_map->size);
-    
+    printf("Yo %d\n", map_t_remove(p_map, 61));
+    printf("Size: %d\n", map_t_size(p_map));
+    printf("Yo %d\n", map_t_remove(p_map, 61));
+    printf("Size: %d\n", map_t_size(p_map));
     return (EXIT_SUCCESS);
 }
 

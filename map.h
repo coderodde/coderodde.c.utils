@@ -61,7 +61,7 @@ extern "C" {
     * Returns the size of the map, or namely, the amount of key/value mappings *
     * in the map.                                                              *
     ***************************************************************************/ 
-    size_t map_t_size         (map_t* p_map);
+    int map_t_size         (map_t* p_map);
     
     /***************************************************************************
     * Checks that the map maintains the AVL-tree invariant.                    *

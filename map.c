@@ -110,10 +110,12 @@ static map_entry_t* left_right_rotate(map_entry_t* p_node_1)
 }
 
 /*******************************************************************************
-* Fixes the tree in order to make it balanced after inserting a new entry.     *
-* The algorithm iterates from an inserted node up to its parent, and the first *
-* parent node that is unbalanced is rotated and algorithm terminates, since    *
-* after addition at most one rotation is enough for making the tree balanced.  *  
+* Fixes the tree in order to balance it. Basically, we start from 'p_entry'    *
+* go up the chain towards parents. If a parent is disbalanced, a set of        *
+* rotations are applied. If 'insertion_mode' is on, it means that previous     *  
+* modification was insertion of an entry. In such a case we need to perform    *
+* only one rotation. If 'insertion_mode' is off, the last operation was        *
+* removal and we need to go up until the root node.                            *
 *******************************************************************************/  
 static void fix_after_modification(map_t* p_map, 
                                    map_entry_t* p_entry,
@@ -394,6 +396,7 @@ void* map_t_remove(map_t* p_map, void* p_key)
     
     p_entry = delete_entry(p_map, p_entry);
     fix_after_modification(p_map, p_entry, FALSE);
+    map_entry_t_free(p_entry);
     return p_entry->p_value;
 }
 
@@ -463,4 +466,26 @@ int map_t_is_healthy(map_t* p_map)
     if (!check_heights(p_map)) return 0;
     
     return check_balance_factors(p_map);
+}
+
+static void map_free_impl(map_entry_t* p_entry)
+{
+    if (!p_entry) return;
+    
+    map_free_impl(p_entry->p_left);
+    map_free_impl(p_entry->p_right);
+    free(p_entry);
+}
+
+void map_t_free(map_t* p_map) 
+{
+    if (!p_map)         return;
+    if (!p_map->p_root) return;
+    
+    map_free_impl(p_map->p_root);
+}
+
+int map_t_size(map_t* p_map) 
+{
+    return p_map ? p_map->size : -1;
 }
