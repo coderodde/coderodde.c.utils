@@ -86,13 +86,18 @@ static void test_correctness()
 static void test_performance()
 {
     map_t* p_map = map_t_alloc(int_comparator);
+    map_iterator_t* p_iterator;
+    
+    const int sz = 1000;
     
     clock_t t;
-    const int sz = 1000000;
+    double duration;
     int i;
     int a;
     int b;
     int tmp;
+    int value;
+    int index;
     
     int* array = malloc(sizeof(int) * sz);
  
@@ -118,20 +123,42 @@ static void test_performance()
     
     for (i = 0; i < sz; ++i)
     {
-        map_t_put(p_map, i, 3 * i);
+        map_t_put(p_map, (void*) array[i], (void*)(3 * array[i]));
     }
     
+    
+    duration += ((double) clock() - t);
     
     printf("Healthy: %d\n", map_t_is_healthy(p_map));
     
-    for (i = 0; i < sz; ++i) 
+    p_iterator = map_iterator_t_alloc(p_map);
+    
+    t = clock();
+    
+    while (map_iterator_t_has_next(p_iterator)) 
     {
-        map_t_remove(p_map, array[sz - 1 - i]);
+        tmp = map_iterator_t_next(p_iterator);
+       
+        if (3 * tmp != map_t_get(p_map, tmp)) exit(1);
     }
     
-    t = clock() - t;
+    duration += ((double) clock() - t);
     
-    printf("Duration: %f seconds.\n", ((double) clock) / CLOCKS_PER_SEC);    
+    t = clock();
+    
+    for (i = 0; i < sz; ++i) 
+    {
+        value = map_t_remove(p_map, array[i]);
+        
+        if (value != 3 * array[i]) 
+        {
+            printf("value: %d, key: %d\n", value, array[i]);
+        } 
+    }
+    
+    duration += ((double) clock() - t);
+    
+    printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);    
 }
 
 int main(int argc, char** argv) {
