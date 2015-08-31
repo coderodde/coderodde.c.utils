@@ -551,6 +551,7 @@ map_iterator_t* map_iterator_t_alloc(map_t* p_map)
     p_iterator->iterated_count = 0;
     p_iterator->p_map = p_map;
     p_iterator->p_next = p_map->p_root ? min_entry(p_map->p_root) : NULL;
+    p_iterator->p_ret_array = calloc(2, sizeof(void*));
     return p_iterator;
 }
 
@@ -565,18 +566,17 @@ int map_iterator_t_has_next(map_iterator_t* p_iterator)
     return p_iterator->iterated_count < p_iterator->p_map->size;
 }
 
-void* map_iterator_t_next(map_iterator_t* p_iterator)
+void** map_iterator_t_next(map_iterator_t* p_iterator)
 {
-    map_entry_t* p_ret;
-    
     if (!p_iterator)        return NULL;
     if (!p_iterator->p_map) return NULL;
     if (map_iterator_t_is_disturbed(p_iterator)) return NULL;
     
-    p_ret = p_iterator->p_next;
+    p_iterator->p_ret_array[0] = p_iterator->p_next->p_key;
+    p_iterator->p_ret_array[1] = p_iterator->p_next->p_value;
     p_iterator->iterated_count++;
     p_iterator->p_next = get_successor_entry(p_iterator->p_next);
-    return p_ret->p_key;
+    return p_iterator->p_ret_array;
 }
 
 int map_iterator_t_is_disturbed(map_iterator_t* p_iterator) 
@@ -585,4 +585,13 @@ int map_iterator_t_is_disturbed(map_iterator_t* p_iterator)
     if (!p_iterator->p_map) return FALSE;
     
     return p_iterator->expected_mod_count != p_iterator->p_map->mod_count;
+}
+
+void map_iterator_t_free(map_iterator_t* p_iterator) 
+{
+    free(p_iterator->p_ret_array);
+    p_iterator->p_map = NULL;
+    p_iterator->p_next = NULL;
+    p_iterator->p_ret_array = NULL;
+    free(p_iterator);
 }

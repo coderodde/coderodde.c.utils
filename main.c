@@ -21,21 +21,21 @@ static void test_iterator()
     map_iterator_t* p_iterator = map_iterator_t_alloc(p_map);
     
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator));
+    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator)[0]);
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator));
+    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator)[0]);
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator));
+    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator)[0]);
     
     map_t_put(p_map, -10, -111);
     printf("Iterator disturbed: %d\n", map_iterator_t_is_disturbed(p_iterator));
     
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator));
+    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator)[0]);
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator));
+    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator)[0]);
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator));
+    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator)[0]);
     
     map_t_put(p_map, 100, 500);
     printf("Iterator disturbed: %d\n", map_iterator_t_is_disturbed(p_iterator));
@@ -82,26 +82,20 @@ static void test_correctness()
     printf("Healthy: %d\n", map_t_is_healthy(p_map));
     printf("Size: %d\n", map_t_size(p_map));
     
-    map_t_clear(p_map);
-    
+    map_t_clear(p_map); 
     printf("Map size after clear: %d\n", map_t_size(p_map));
     
     map_t_put(p_map, 1, 10);
-    
     printf("1 -> %d\n", map_t_get(p_map, 1));
 
     map_t_put(p_map, 1, 20);
-    
     printf("1 -> %d\n", map_t_get(p_map, 1));
-    
     printf("Map size: %d\n", map_t_size(p_map));
     
     map_t_remove(p_map, 1);
-    
     printf("Map size: %d\n", map_t_size(p_map));
     
     map_t_remove(p_map, 1);
-    
     printf("Map size: %d\n", map_t_size(p_map));
     
     map_t_free(p_map);
@@ -123,6 +117,7 @@ static void test_performance()
     int tmp;
     int value;
     int index;
+    void** vtmp;
     
     int* array = malloc(sizeof(int) * sz);
  
@@ -163,9 +158,8 @@ static void test_performance()
     
     while (map_iterator_t_has_next(p_iterator)) 
     {
-        tmp = map_iterator_t_next(p_iterator);
-       
-        if (3 * tmp != map_t_get(p_map, tmp)) exit(1);
+        vtmp = map_iterator_t_next(p_iterator);
+        if (3 * (int) vtmp[0] != vtmp[1]) exit(1);
     }
     
     duration += ((double) clock() - t);
@@ -174,7 +168,6 @@ static void test_performance()
     
     for (i = 0; i < 5; ++i) 
     {
-        puts("Oh, yeah.");
         for (j = 0; j < sz; ++j) 
         {
             value = map_t_get(p_map, array[i]);
@@ -226,4 +219,3 @@ int main(int argc, char** argv) {
     test_performance();
     return (EXIT_SUCCESS);
 }
-

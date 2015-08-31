@@ -26,6 +26,7 @@ extern "C" {
     typedef struct map_iterator_t {
         map_t*       p_map;
         map_entry_t* p_next;
+        void**       p_ret_array;
         size_t       iterated_count;
         size_t       expected_mod_count;
     } map_iterator_t;
@@ -93,12 +94,17 @@ extern "C" {
     /***************************************************************************
     * Returns the next key in the iteration order.                             *
     ***************************************************************************/  
-    void*           map_iterator_t_next         (map_iterator_t* p_iterator);
+    void**          map_iterator_t_next         (map_iterator_t* p_iterator);
 
     /***************************************************************************
     * Returns a positive integer if the map was modified during the iteration. *
     ***************************************************************************/  
     int             map_iterator_t_is_disturbed (map_iterator_t* p_iterator);
+    
+    /***************************************************************************
+    * Deallocates the map iterator.                                            *
+    ***************************************************************************/  
+    void            map_iterator_t_free         (map_iterator_t* p_iterator);
     
 #ifdef	__cplusplus
 }
