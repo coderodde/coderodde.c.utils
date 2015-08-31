@@ -10,6 +10,9 @@ static int int_comparator(void* a, void* b)
 
 static void test_iterator()
 {
+    void* p_key;
+    void* p_value;
+    
     int i;
     map_t* p_map = map_t_alloc(int_comparator);
     
@@ -21,31 +24,46 @@ static void test_iterator()
     map_iterator_t* p_iterator = map_iterator_t_alloc(p_map);
     
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator)[0]);
+    map_iterator_t_next(p_iterator, &p_key, &p_value);
+    printf("Iterator returned: %d -> %d\n", p_key, p_value);
+    
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator)[0]);
+    map_iterator_t_next(p_iterator, &p_key, &p_value);
+    printf("Iterator returned: %d -> %d\n", p_key, p_value);
+    
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator)[0]);
+    map_iterator_t_next(p_iterator, &p_key, &p_value);
+    printf("Iterator returned: %d -> %d\n", p_key, p_value);
     
     map_t_put(p_map, -10, -111);
     printf("Iterator disturbed: %d\n", map_iterator_t_is_disturbed(p_iterator));
     
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator)[0]);
+    map_iterator_t_next(p_iterator, &p_key, &p_value);
+    printf("Iterator returned: %d -> %d\n", p_key, p_value);
+    
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator)[0]);
+    map_iterator_t_next(p_iterator, &p_key, &p_value);
+    printf("Iterator returned: %d -> %d\n", p_key, p_value);
+    
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator)[0]);
+    map_iterator_t_next(p_iterator, &p_key, &p_value);
+    printf("Iterator returned: %d -> %d\n", p_key, p_value);
     
     map_t_put(p_map, 100, 500);
     printf("Iterator disturbed: %d\n", map_iterator_t_is_disturbed(p_iterator));
     
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator));
+    map_iterator_t_next(p_iterator, &p_key, &p_value);
+    printf("Iterator returned: %d -> %d\n", p_key, p_value);
+    
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator));
+    map_iterator_t_next(p_iterator, &p_key, &p_value);
+    printf("Iterator returned: %d -> %d\n", p_key, p_value);
+    
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
-    printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator));
+    map_iterator_t_next(p_iterator, &p_key, &p_value);
+    printf("Iterator returned: %d -> %d\n", p_key, p_value);
     
     map_t_free(p_map);
 }
@@ -64,7 +82,7 @@ static void test_correctness()
         printf("%3d: %3d (%d)\n", i, map_t_contains_key(p_map, i), map_t_get(p_map, i));
 
     printf("Healthy: %d\n", map_t_is_healthy(p_map));
-    printf("Size: %d\n", p_map->size);
+    printf("Size: %d\n", map_t_size(p_map));
     
     puts("");
     puts("AFTER REMOVAL");
@@ -118,6 +136,8 @@ static void test_performance()
     int value;
     int index;
     void** vtmp;
+    void* p_key;
+    void* p_value;
     
     int* array = malloc(sizeof(int) * sz);
  
@@ -158,8 +178,9 @@ static void test_performance()
     
     while (map_iterator_t_has_next(p_iterator)) 
     {
-        vtmp = map_iterator_t_next(p_iterator);
-        if (3 * (int) vtmp[0] != vtmp[1]) exit(1);
+        map_iterator_t_next(p_iterator, &p_key, &p_value);
+        
+        if (3 * (int) p_key != p_value) exit(1);
     }
     
     duration += ((double) clock() - t);
@@ -207,7 +228,7 @@ static void test_performance()
     /* Empty iterator. */
     while (map_iterator_t_has_next(p_iterator)) 
     {
-        printf("Element: %d\n", map_iterator_t_next(p_iterator));
+        printf("Element: %d\n", map_iterator_t_next(p_iterator, &p_key, &p_value));
     }
     
     printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);    
