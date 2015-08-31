@@ -7,7 +7,7 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
+    
     typedef struct map_t map_t;
     typedef struct map_iterator_t map_iterator_t;
 
@@ -53,7 +53,7 @@ extern "C" {
     /***************************************************************************
     * Checks that the map maintains the AVL-tree invariant.                    *
     ***************************************************************************/  
-    int    map_t_is_healthy   (map_t* p_map);
+    bool   map_t_is_healthy   (map_t* p_map);
 
     /***************************************************************************
     * Deallocates the entire map. Only the map and its nodes are deallocated.  *

@@ -458,13 +458,14 @@ void* map_t_remove(map_t* p_map, void* p_key)
 /*******************************************************************************
 * This routine implements the actual checking of tree balance.                 *
 *******************************************************************************/  
-static int check_balance_factors_impl(map_entry_t* p_entry)
+static bool check_balance_factors_impl(map_entry_t* p_entry)
 {
-    if (!p_entry) return 1;
-    if (abs(height(p_entry->p_left) - height(p_entry->p_right)) > 1) return 0;
-    if (!check_balance_factors_impl(p_entry->p_left))  return 0;
-    if (!check_balance_factors_impl(p_entry->p_right)) return 0;
-    return 1;
+    if (!p_entry) return true;
+    if (abs(height(p_entry->p_left) - 
+            height(p_entry->p_right)) > 1)             return false;
+    if (!check_balance_factors_impl(p_entry->p_left))  return false;
+    if (!check_balance_factors_impl(p_entry->p_right)) return false;
+    return true;
 }
 
 /*******************************************************************************
@@ -514,11 +515,11 @@ static int check_heights(map_t* p_map)
     return check_heights_impl(p_map->p_root) != -2;
 }
 
-int map_t_is_healthy(map_t* p_map) 
+bool map_t_is_healthy(map_t* p_map) 
 {
-    if (!p_map) return 0;
+    if (!p_map) return false;
 
-    if (!check_heights(p_map)) return 0;
+    if (!check_heights(p_map)) return false;
 
     return check_balance_factors(p_map);
 }
