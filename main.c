@@ -3,8 +3,6 @@
 #include <time.h>
 #include "map.h"
 
-#define NUM(a) ((void*) a)
-
 static int int_comparator(void* a, void* b) 
 {
     return (int) a - (int) b;
@@ -48,6 +46,8 @@ static void test_iterator()
     printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator));
     printf("Iterator has next: %d\n", map_iterator_t_has_next(p_iterator));
     printf("Iterator returned: %d\n", (int) map_iterator_t_next(p_iterator));
+    
+    map_t_free(p_map);
 }
 
 static void test_correctness() 
@@ -81,6 +81,30 @@ static void test_correctness()
 
     printf("Healthy: %d\n", map_t_is_healthy(p_map));
     printf("Size: %d\n", map_t_size(p_map));
+    
+    map_t_clear(p_map);
+    
+    printf("Map size after clear: %d\n", map_t_size(p_map));
+    
+    map_t_put(p_map, 1, 10);
+    
+    printf("1 -> %d\n", map_t_get(p_map, 1));
+
+    map_t_put(p_map, 1, 20);
+    
+    printf("1 -> %d\n", map_t_get(p_map, 1));
+    
+    printf("Map size: %d\n", map_t_size(p_map));
+    
+    map_t_remove(p_map, 1);
+    
+    printf("Map size: %d\n", map_t_size(p_map));
+    
+    map_t_remove(p_map, 1);
+    
+    printf("Map size: %d\n", map_t_size(p_map));
+    
+    map_t_free(p_map);
 }
 
 static void test_performance()
@@ -88,11 +112,12 @@ static void test_performance()
     map_t* p_map = map_t_alloc(int_comparator);
     map_iterator_t* p_iterator;
     
-    const int sz = 10;
+    const int sz = 1000000;
     
     clock_t t;
     double duration;
     int i;
+    int j;
     int a;
     int b;
     int tmp;
@@ -107,7 +132,7 @@ static void test_performance()
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
-    int time_ = 1440937226;// time(NULL);
+    int time_ = time(NULL);
     printf("Time: %d.\n", time_);
     srand(time_);
     
@@ -147,30 +172,50 @@ static void test_performance()
     
     t = clock();
     
-    printf("map size: %d\n", map_t_size(p_map));
+    for (i = 0; i < 5; ++i) 
+    {
+        puts("Oh, yeah.");
+        for (j = 0; j < sz; ++j) 
+        {
+            value = map_t_get(p_map, array[i]);
+            
+            if (value != 3 * array[i]) 
+            {
+                exit(3);
+            }
+        }
+    }
+    
+    duration += ((double) clock() - t);
+    
+    t = clock();
     
     for (i = 0; i < sz; ++i) 
     {   
-        printf("Map size before remove: %d\n", map_t_size(p_map));
         value = map_t_remove(p_map, array[i]);
-        printf("Map size after remove: %d\n", map_t_size(p_map));
         
         if (value != 3 * array[i]) 
         {
-            printf("Key: %d, value: %d, index: %d, map size: %d, contains: %d.\n",
-                    array[i], value, i, map_t_size(p_map), map_t_contains_key(p_map, array[i]));
+            printf("Key: %d, value: %d, index: %d, map size: %d, "
+                   "contains: %d.\n",
+                    array[i], 
+                    value, 
+                    i, 
+                    map_t_size(p_map), 
+                    map_t_contains_key(p_map, array[i]));
         } 
     }
     
     duration += ((double) clock() - t);
     printf("Healthy: %d\n", map_t_is_healthy(p_map));
     
-//    p_iterator = map_iterator_t_alloc(p_map);
-//    
-//    while (map_iterator_t_has_next(p_iterator)) 
-//    {
-//        printf("Element: %d\n", map_iterator_t_next(p_iterator));
-//    }
+    p_iterator = map_iterator_t_alloc(p_map);
+    
+    /* Empty iterator. */
+    while (map_iterator_t_has_next(p_iterator)) 
+    {
+        printf("Element: %d\n", map_iterator_t_next(p_iterator));
+    }
     
     printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);    
 }

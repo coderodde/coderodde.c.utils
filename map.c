@@ -24,15 +24,8 @@ static map_entry_t* map_entry_t_alloc(void* p_key, void* p_value)
 }
 
 /*******************************************************************************
-* Deallocates the map entry.                                                   *
-*******************************************************************************/
-static void map_entry_t_free(map_entry_t* p_node) 
-{
-    if (p_node) free(p_node);
-}
-
-/*******************************************************************************
-* Returns the height of an entry.                                              *
+* Returns the height of an entry. The height of a non-existent entry is        *
+* assumed to be -1.                                                            *
 *******************************************************************************/
 static int height(map_entry_t* p_node) 
 {
@@ -149,6 +142,7 @@ static void fix_after_modification(map_t* p_map,
                         max(height(p_grand_parent->p_left),
                                    height(p_grand_parent->p_right)) + 1;
             
+            /* Fixing after insertion requires only one rotation. */
             if (insertion_mode) return;
         }
         
@@ -174,6 +168,7 @@ static void fix_after_modification(map_t* p_map,
                         max(height(p_grand_parent->p_left),
                             height(p_grand_parent->p_right)) + 1;
             
+            /* Fixing after insertion requires only one rotation. */
             if (insertion_mode) return;
         }
         
@@ -183,6 +178,9 @@ static void fix_after_modification(map_t* p_map,
     }
 }
 
+/*******************************************************************************
+* Performs the actual insertion of an entry.                                   *
+*******************************************************************************/
 static int insert(map_t* p_map, void* p_key, void* p_value) 
 {
     map_entry_t* p_new_entry = map_entry_t_alloc(p_key, p_value);
@@ -226,12 +224,19 @@ static int insert(map_t* p_map, void* p_key, void* p_value)
     return (EXIT_SUCCESS);
 }
 
+/*******************************************************************************
+* Returns the minimum entry of a subtree rooted at 'p_entry'.                  *
+*******************************************************************************/  
 static map_entry_t* min_entry(map_entry_t* p_entry)
 {
     while (p_entry->p_left) p_entry = p_entry->p_left;
     return p_entry;
 }
 
+/*******************************************************************************
+* Returns the successor entry as specified by the order implied by the         *
+* comparator.                                                                  *
+*******************************************************************************/
 static map_entry_t* get_successor_entry(map_entry_t* p_entry)
 {
     map_entry_t* p_parent;
@@ -249,6 +254,9 @@ static map_entry_t* get_successor_entry(map_entry_t* p_entry)
     return p_parent;
 }
 
+/*******************************************************************************
+* This routine is responsible for removing entries from the tree.              *
+*******************************************************************************/  
 static map_entry_t* delete_entry(map_t* p_map, map_entry_t* p_entry)
 {
     map_entry_t* p_parent;
@@ -425,7 +433,7 @@ void* map_t_remove(map_t* p_map, void* p_key)
     ret = p_entry->p_value;
     p_entry = delete_entry(p_map, p_entry);
     fix_after_modification(p_map, p_entry, FALSE);
-    map_entry_t_free(p_entry);
+    free(p_entry);
     return ret;
 }
 
@@ -497,6 +505,10 @@ int map_t_is_healthy(map_t* p_map)
     return check_balance_factors(p_map);
 }
 
+/*******************************************************************************
+* Implements the actual deallocation of the tree entries by traversing the     *
+* tree in post-order.                                                          * 
+*******************************************************************************/  
 static void map_free_impl(map_entry_t* p_entry)
 {
     if (!p_entry) return;
@@ -512,6 +524,18 @@ void map_t_free(map_t* p_map)
     if (!p_map->p_root) return;
     
     map_free_impl(p_map->p_root);
+    free(p_map);
+}
+
+void map_t_clear(map_t* p_map) 
+{
+    if (!p_map)         return;
+    if (!p_map->p_root) return;
+    
+    map_free_impl(p_map->p_root);
+    p_map->mod_count += p_map->size;
+    p_map->p_root = NULL;
+    p_map->size = 0;
 }
 
 int map_t_size(map_t* p_map) 
@@ -526,7 +550,7 @@ map_iterator_t* map_iterator_t_alloc(map_t* p_map)
     p_iterator->expected_mod_count = p_map->mod_count;
     p_iterator->iterated_count = 0;
     p_iterator->p_map = p_map;
-    p_iterator->p_next = min_entry(p_map->p_root);
+    p_iterator->p_next = p_map->p_root ? min_entry(p_map->p_root) : NULL;
     return p_iterator;
 }
 
