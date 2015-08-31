@@ -88,7 +88,7 @@ static void test_performance()
     map_t* p_map = map_t_alloc(int_comparator);
     map_iterator_t* p_iterator;
     
-    const int sz = 1000;
+    const int sz = 10;
     
     clock_t t;
     double duration;
@@ -101,13 +101,15 @@ static void test_performance()
     
     int* array = malloc(sizeof(int) * sz);
  
-    puts("--- PERFORMANCE --");
+    puts("--- PERFORMANCE ---");
     printf("RAND_MAX: %d\n", RAND_MAX);
     
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
-    srand(time(NULL));
+    int time_ = 1440937226;// time(NULL);
+    printf("Time: %d.\n", time_);
+    srand(time_);
     
     for (i = 0; i < sz; ++i)
     {
@@ -125,7 +127,6 @@ static void test_performance()
     {
         map_t_put(p_map, (void*) array[i], (void*)(3 * array[i]));
     }
-    
     
     duration += ((double) clock() - t);
     
@@ -146,17 +147,30 @@ static void test_performance()
     
     t = clock();
     
+    printf("map size: %d\n", map_t_size(p_map));
+    
     for (i = 0; i < sz; ++i) 
-    {
+    {   
+        printf("Map size before remove: %d\n", map_t_size(p_map));
         value = map_t_remove(p_map, array[i]);
+        printf("Map size after remove: %d\n", map_t_size(p_map));
         
         if (value != 3 * array[i]) 
         {
-            printf("value: %d, key: %d\n", value, array[i]);
+            printf("Key: %d, value: %d, index: %d, map size: %d, contains: %d.\n",
+                    array[i], value, i, map_t_size(p_map), map_t_contains_key(p_map, array[i]));
         } 
     }
     
     duration += ((double) clock() - t);
+    printf("Healthy: %d\n", map_t_is_healthy(p_map));
+    
+//    p_iterator = map_iterator_t_alloc(p_map);
+//    
+//    while (map_iterator_t_has_next(p_iterator)) 
+//    {
+//        printf("Element: %d\n", map_iterator_t_next(p_iterator));
+//    }
     
     printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);    
 }

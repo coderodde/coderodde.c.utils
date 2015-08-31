@@ -255,7 +255,8 @@ static map_entry_t* delete_entry(map_t* p_map, map_entry_t* p_entry)
     map_entry_t* p_child;
     map_entry_t* p_successor;
     
-    printf("Deleting %d.\n", p_entry->p_key);
+    void* p_tmp_key;
+    void* p_tmp_value;
     
     if (!p_entry->p_left && !p_entry->p_right)
     {
@@ -293,7 +294,9 @@ static map_entry_t* delete_entry(map_t* p_map, map_entry_t* p_entry)
         
         if (!p_parent) 
         {
-            p_map->p_root = p_parent;
+            p_map->p_root = p_child;
+            p_map->size--;
+            p_map->mod_count++;
             return p_entry;
         }
         
@@ -308,6 +311,8 @@ static map_entry_t* delete_entry(map_t* p_map, map_entry_t* p_entry)
     }
     
     /** The node to remove has both children. */
+    p_tmp_key        = p_entry->p_key;
+    p_tmp_value      = p_entry->p_value;
     p_successor      = min_entry(p_entry->p_right);
     p_entry->p_key   = p_successor->p_key;
     p_entry->p_value = p_successor->p_value;
@@ -324,6 +329,8 @@ static map_entry_t* delete_entry(map_t* p_map, map_entry_t* p_entry)
     
     p_map->size--;
     p_map->mod_count++;
+    p_successor->p_key   = p_tmp_key;
+    p_successor->p_value = p_tmp_value;
     return p_successor;
 }
 
@@ -415,8 +422,8 @@ void* map_t_remove(map_t* p_map, void* p_key)
     
     if (!p_entry) return NULL;
     
-    p_entry = delete_entry(p_map, p_entry);
     ret = p_entry->p_value;
+    p_entry = delete_entry(p_map, p_entry);
     fix_after_modification(p_map, p_entry, FALSE);
     map_entry_t_free(p_entry);
     return ret;
