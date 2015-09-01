@@ -25,7 +25,7 @@ extern "C" {
     /***************************************************************************
     * Returns a positive value if p_key is mapped to some value in this map.   *
     ***************************************************************************/
-    int    map_t_contains_key (map_t* p_map, void* p_key);
+    bool   map_t_contains_key (map_t* p_map, void* p_key);
 
     /***************************************************************************
     * Returns the value associated with the p_key, or NULL if p_key is not     *

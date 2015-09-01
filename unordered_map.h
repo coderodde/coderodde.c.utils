@@ -1,6 +1,9 @@
 #ifndef UNORDERED_MAP_H
 #define	UNORDERED_MAP_H
 
+#include <stdlib.h>
+#include <stdbool.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -11,9 +14,11 @@ extern "C" {
     /***************************************************************************
     * Allocates a new, empty map with given comparator function.               *
     ***************************************************************************/ 
-    unordered_map_t* unordered_map_t_alloc (int (*p_comparator)(void*, void*),
-                                            size_t initial_capacity,
-                                            float load_factor);
+    unordered_map_t* unordered_map_t_alloc 
+           (size_t initial_capacity,
+            float load_factor,
+            size_t (*p_hash_function)(void*),
+            bool (*p_equals_function)(void*, void*));
 
     /***************************************************************************
     * If p_map contains the key p_key, associates it with value p_value and    *
@@ -26,7 +31,7 @@ extern "C" {
     /***************************************************************************
     * Returns a positive value if p_key is mapped to some value in this map.   *
     ***************************************************************************/
-    int    unordered_map_t_contains_key    (unordered_map_t* p_map, 
+    bool   unordered_map_t_contains_key    (unordered_map_t* p_map, 
                                             void* p_key);
 
     /***************************************************************************
@@ -79,7 +84,7 @@ extern "C" {
     /***************************************************************************
     * Returns the next entry in the iteration order.                           *
     ***************************************************************************/  
-    bool unordered_map_iterator_t_next(map_iterator_t* p_iterator, 
+    bool unordered_map_iterator_t_next(unordered_map_iterator_t* p_iterator, 
                                        void** pp_key, 
                                        void** pp_value);
 

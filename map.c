@@ -419,11 +419,11 @@ void* map_t_put(map_t* p_map, void* p_key, void* p_value)
     return NULL;
 }
 
-int map_t_contains_key (map_t* p_map, void* p_key)
+bool map_t_contains_key (map_t* p_map, void* p_key)
 {
-    if (!p_map) return 0;
+    if (!p_map) return false;
 
-    return find_entry(p_map, p_key) ? 1 : 0;
+    return find_entry(p_map, p_key);
 }
 
 void* map_t_get(map_t* p_map, void* p_key)
