@@ -114,7 +114,6 @@ unordered_map_t* unordered_map_t_alloc(size_t initial_capacity,
     return p_ret;
 }
 
-
 static void ensure_capacity(unordered_map_t* p_map) 
 {
     size_t new_capacity;
@@ -167,13 +166,13 @@ void* unordered_map_t_put(unordered_map_t* p_map, void* p_key, void* p_value)
     index = p_map->p_hash_function(p_key) & p_map->mask;
     
     for (p_entry = p_map->p_table[index]; 
-            p_entry;
-            p_entry = p_entry->p_chain_next)
+         p_entry;
+         p_entry = p_entry->p_chain_next)
     {
         if (p_map->p_equals_function(p_entry->p_key, p_key))
         {
             p_old_value = p_entry->p_value;
-            p_entry->p_value;
+            p_entry->p_value = p_value;
             return p_old_value;
         }
     }
@@ -181,6 +180,20 @@ void* unordered_map_t_put(unordered_map_t* p_map, void* p_key, void* p_value)
     p_entry               = unordered_map_entry_t_alloc(p_key, p_value);
     p_entry->p_chain_next = p_map->p_table[index];
     p_map->p_table[index] = p_entry;
+    
+    /* Link the new entry to the tail of the list. */
+    if (!p_map->p_tail)
+    {
+        p_map->p_head = p_entry;
+        p_map->p_tail = p_entry;
+    }
+    else
+    {
+        p_map->p_tail->p_next = p_entry;
+        p_entry->p_prev = p_map->p_tail;
+        p_map->p_tail = p_entry;
+    }
+    
     p_map->size++;
     p_map->mod_count++;
     return NULL;
@@ -188,64 +201,224 @@ void* unordered_map_t_put(unordered_map_t* p_map, void* p_key, void* p_value)
 
 bool unordered_map_t_contains_key(unordered_map_t* p_map, void* p_key)
 {
+    size_t index;
+    unordered_map_entry_t* p_entry;
     
+    if (!p_map) return false;
+    
+    index = p_map->p_hash_function(p_key) & p_map->mask;
+    
+    for (p_entry = p_map->p_table[index]; 
+         p_entry; 
+         p_entry = p_entry->p_chain_next) 
+    {
+        if (p_map->p_equals_function(p_key, p_entry->p_key)) return true;
+    }
+    
+    return false;
 }
 
 void* unordered_map_t_get(unordered_map_t* p_map, void* p_key)
 {
+    size_t index;
+    unordered_map_entry_t* p_entry;
     
+    if (!p_map) return NULL;
+    
+    index = p_map->p_hash_function(p_key) & p_map->mask;
+    
+    for (p_entry = p_map->p_table[index];
+         p_entry;
+         p_entry = p_entry->p_chain_next)
+    {
+        if (p_map->p_equals_function(p_key, p_entry->p_key)) 
+            return p_entry->p_value;
+    }
+    
+    return NULL;
 }
 
 void* unordered_map_t_remove(unordered_map_t* p_map, void* p_key)
 {
+    void*  p_ret;
+    size_t index;
+    unordered_map_entry_t* p_prev_entry;
+    unordered_map_entry_t* p_current_entry;
     
+    if (!p_map) return NULL;
+    
+    index = p_map->p_hash_function(p_key) & p_map->mask;
+    
+    p_prev_entry = NULL;
+    
+    for (p_current_entry = p_map->p_table[index];
+         p_current_entry;
+         p_current_entry = p_current_entry->p_chain_next)
+    {
+        if (p_map->p_equals_function(p_key, p_current_entry->p_key)) 
+        {
+            if (p_prev_entry)
+            {
+                /* Omit the 'p_current_entry' in the collision chain. */
+                p_prev_entry->p_chain_next = p_current_entry->p_chain_next;
+            }
+            else
+            {
+                p_map->p_table[index] = p_current_entry->p_chain_next;
+            }
+            
+            /* Unlink from the global iteration chain. */
+            if (p_current_entry->p_prev && p_current_entry->p_next) 
+            {
+                /* Once here, the current entry has both next and previous. */
+                p_current_entry->p_prev->p_next = p_current_entry->p_next;
+                p_current_entry->p_next->p_prev = p_current_entry->p_prev;
+            }
+            else if (!p_current_entry->p_prev && !p_current_entry->p_next)
+            {
+                /* Once here, the current entry 
+                   is the only entry in the chain. */
+                p_map->p_head = NULL;
+                p_map->p_tail = NULL;
+            }
+            else if (p_current_entry->p_next)
+            {
+                /* Once here, the current entry is the head of the chain. */
+                p_map->p_head = p_current_entry->p_next;
+                p_map->p_head->p_prev = NULL;
+            }
+            else
+            {
+                /* Once here, the current entry is the tail of the chain. */
+                p_map->p_tail = p_current_entry->p_prev;
+                p_map->p_tail->p_next = NULL;
+            }
+            
+            p_ret = p_current_entry->p_value;
+            p_map->size--;
+            p_map->mod_count++;
+            free(p_current_entry);
+            return p_ret;
+        }
+        
+        p_prev_entry = p_current_entry;
+    }
+    
+    return NULL;
 }
 
 void unordered_map_t_clear(unordered_map_t* p_map)
 {
+    unordered_map_entry_t* p_entry;
+    unordered_map_entry_t* p_next_entry;
     
+    if (!p_map) return;
+
+    p_entry = p_map->p_head;
+    
+    while (p_entry)
+    {
+        p_next_entry = p_entry->p_next;
+        free(p_entry);
+        p_entry = p_next_entry;
+    }
+    
+    p_map->mod_count += p_map->size;
+    p_map->size = 0;
+    p_map->p_head = NULL;
+    p_map->p_tail = NULL;
 }
 
 int unordered_map_t_size(unordered_map_t* p_map)
 {
-    
+    return p_map ? p_map->size : -1;
 }
 
 bool unordered_map_t_is_healthy(unordered_map_t* p_map)
 {
+    size_t counter;
+    unordered_map_entry_t* p_entry;
     
+    if (!p_map) return false;
+    
+    counter = 0;
+    p_entry = p_map->p_head;
+    
+    if (!p_entry->p_prev) return false;
+    
+    for (; p_entry; p_entry = p_entry->p_next)
+    {
+        counter++;
+    }
+    
+    return counter == p_map->size;
 }
 
 void unordered_map_t_free(unordered_map_t* p_map)
 {
+    if (!p_map) return;
     
+    unordered_map_t_clear(p_map);
+    free(p_map->p_table);
+    free(p_map);
 }
 
 unordered_map_iterator_t* 
 unordered_map_iterator_t_alloc(unordered_map_t* p_map)
 {
+    unordered_map_iterator_t* p_ret;
     
+    if (!p_map) return NULL;
+    
+    p_ret = malloc(sizeof(*p_ret));
+    
+    if (!p_ret) return NULL;
+    
+    p_ret->expected_mod_count = p_map->mod_count;
+    p_ret->iterated_count = 0;
+    p_ret->p_map;
+    p_ret->p_next_entry = p_map->p_head;
+    
+    return p_ret;
 }
 
 int unordered_map_iterator_t_has_next(unordered_map_iterator_t* p_iterator)
 {
+    if (!p_iterator) return 0;
     
+    if (unordered_map_iterator_t_is_disturbed(p_iterator)) return 0;
+    
+    return p_iterator->p_map->size - p_iterator->iterated_count;
 }
 
 bool unordered_map_iterator_t_next(unordered_map_iterator_t* p_iterator, 
                                    void** pp_key, 
                                    void** pp_value)
 {
+    if (!p_iterator)                                       return false;
+    if (!p_iterator->p_next_entry)                         return false;
+    if (unordered_map_iterator_t_is_disturbed(p_iterator)) return false;
     
+    *pp_key   = p_iterator->p_next_entry->p_key;
+    *pp_value = p_iterator->p_next_entry->p_value;
+    p_iterator->iterated_count++;
+    p_iterator->p_next_entry = p_iterator->p_next_entry->p_next;
+    return true;
 }
 
 bool
 unordered_map_iterator_t_is_disturbed(unordered_map_iterator_t* p_iterator)
 {
+    if (!p_iterator) false;
     
+    return p_iterator->expected_mod_count != p_iterator->p_map->mod_count;
 }
 
 void unordered_map_iterator_t_free(unordered_map_iterator_t* p_iterator)
 {
+    if (!p_iterator) return;
     
+    p_iterator->p_map = NULL;
+    p_iterator->p_next_entry = NULL;
+    free(p_iterator);
 }

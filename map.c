@@ -606,6 +606,8 @@ bool map_iterator_t_is_disturbed(map_iterator_t* p_iterator)
 
 void map_iterator_t_free(map_iterator_t* p_iterator) 
 {
+    if (!p_iterator) return;
+    
     p_iterator->p_map = NULL;
     p_iterator->p_next = NULL;
     free(p_iterator);
