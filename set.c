@@ -25,7 +25,7 @@ typedef struct set_iterator_t {
 } set_iterator_t;
     
 /*******************************************************************************
-* Creates a new map entry and initializes its fields.                          *
+* Creates a new set entry and initializes its fields.                          *
 *******************************************************************************/  
 static set_entry_t* set_entry_t_alloc(void* p_element) 
 {
@@ -236,7 +236,7 @@ static int insert(set_t* p_set, void* p_element)
     else
         p_parent->p_right = p_new_entry;
 
-    /** TRUE means we choose the insertion mode for fixing the tree. */
+    /** 'true' means we choose the insertion mode for fixing the tree. */
     fix_after_modification(p_set, p_new_entry, true);
     p_set->size++;
     p_set->mod_count++;
@@ -283,7 +283,6 @@ static set_entry_t* delete_entry(set_t* p_set, set_entry_t* p_entry)
     set_entry_t* p_successor;
 
     void* p_tmp_element;
-    void* p_tmp_value;
 
     if (!p_entry->p_left && !p_entry->p_right)
     {
@@ -354,7 +353,7 @@ static set_entry_t* delete_entry(set_t* p_set, set_entry_t* p_entry)
 
     p_set->size--;
     p_set->mod_count++;
-    p_successor->p_element   = p_tmp_element;
+    p_successor->p_element = p_tmp_element;
     return p_successor;
 }
 
@@ -415,20 +414,18 @@ bool set_t_contains(set_t* p_set, void* p_element)
 
 bool set_t_remove(set_t* p_set, void* p_element)
 {
-    void* ret;
     set_entry_t* p_entry;
 
-    if (!p_set) return NULL;
+    if (!p_set) return false;
 
     p_entry = find_entry(p_set, p_element);
 
-    if (!p_entry) return NULL;
+    if (!p_entry) return false;
 
     p_entry = delete_entry(p_set, p_entry);
     fix_after_modification(p_set, p_entry, false);
-    ret = p_entry->p_element;
     free(p_entry);
-    return ret;
+    return true;
 }
 
 /*******************************************************************************

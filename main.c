@@ -43,7 +43,7 @@ static void test_map_performance()
     
     int* array = malloc(sizeof(int) * sz);
  
-    puts("--- PERFORMANCE ---");
+    puts("--- PERFORMANCE OF MAP ---");
     
     for (i = 0; i < sz; ++i) 
         array[i] = i;
@@ -154,7 +154,7 @@ static void test_set_performance()
     
     int* array = malloc(sizeof(int) * sz);
  
-    puts("--- PERFORMANCE ---");
+    puts("--- PERFORMANCE OF SET ---");
     
     for (i = 0; i < sz; ++i) 
         array[i] = i;
@@ -162,7 +162,6 @@ static void test_set_performance()
     int time_ = time(NULL);
     printf("Time: %d.\n", time_);
     srand(time_);
-    puts("Shuffling the integer array.");
     
     for (i = 0; i < sz; ++i)
     {
@@ -188,7 +187,6 @@ static void test_set_performance()
     p_iterator = set_iterator_t_alloc(p_set);
     
     t = clock();
-    
     i = 0;
     
     while (set_iterator_t_has_next(p_iterator)) 
@@ -212,8 +210,13 @@ static void test_set_performance()
     t = clock();
     
     for (i = 0; i < sz; ++i) 
-        if(!ASSERT(set_t_remove(p_set, array[i])))
-            printf("Yoo!: %d\n", i);
+    {
+        if(!ASSERT(set_t_remove(p_set, (void*) array[i])))
+        {
+            printf("Fails at index %d\n", i);
+            exit(3);
+        }
+    }
     
     duration += ((double) clock() - t);
     printf("Healthy: %d\n", set_t_is_healthy(p_set));
@@ -223,7 +226,7 @@ static void test_set_performance()
     /* Empty iterator. */
     while (map_iterator_t_has_next(p_iterator)) 
     {
-        printf("Element: %d\n", set_iterator_t_next(p_iterator, &p_element));
+        set_iterator_t_next(p_iterator, &p_element);
     }
     
     printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);    

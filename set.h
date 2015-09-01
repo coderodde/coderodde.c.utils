@@ -23,7 +23,7 @@ extern "C" {
     bool  set_t_add          (set_t* p_set, void* p_element);
 
     /***************************************************************************
-    * Returns a true if the set contains the element.                          *
+    * Returns true if the set contains the element.                            *
     ***************************************************************************/
     bool  set_t_contains     (set_t* p_set, void* p_element);
 
@@ -49,7 +49,8 @@ extern "C" {
 
     /***************************************************************************
     * Deallocates the entire set. Only the set and its nodes are deallocated.  *
-    * The user is responsible to deallocate the actual data stored in the set. *
+    * The user is responsible for deallocating the actual data stored in the   *
+    * set.                                                                     *
     ***************************************************************************/ 
     void   set_t_free         (set_t* p_set);
 
@@ -70,7 +71,7 @@ extern "C" {
                                                  void** pp_element);
 
     /***************************************************************************
-    * Returns a positive integer if the set was modified during the iteration. *
+    * Returns true if the set was modified during the iteration.               *
     ***************************************************************************/  
     bool            set_iterator_t_is_disturbed (set_iterator_t* p_iterator);
 
