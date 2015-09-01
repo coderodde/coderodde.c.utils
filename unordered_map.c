@@ -374,10 +374,10 @@ unordered_map_iterator_t_alloc(unordered_map_t* p_map)
     
     if (!p_ret) return NULL;
     
+    p_ret->p_map              = p_map;
+    p_ret->iterated_count     = 0;
+    p_ret->p_next_entry       = p_map->p_head;
     p_ret->expected_mod_count = p_map->mod_count;
-    p_ret->iterated_count = 0;
-    p_ret->p_map;
-    p_ret->p_next_entry = p_map->p_head;
     
     return p_ret;
 }
