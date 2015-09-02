@@ -1,19 +1,18 @@
-#include "unordered_map.h"
+#include "unordered_set.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef struct unordered_map_entry_t {
+typedef struct unordered_set_entry_t {
     void*                         p_key;
-    void*                         p_value;
-    struct unordered_map_entry_t* p_chain_next;
-    struct unordered_map_entry_t* p_prev;
-    struct unordered_map_entry_t* p_next;
-} unordered_map_entry_t;
+    struct unordered_set_entry_t* p_chain_next;
+    struct unordered_set_entry_t* p_prev;
+    struct unordered_set_entry_t* p_next;
+} unordered_set_entry_t;
 
-typedef struct unordered_map_t {
-    unordered_map_entry_t** p_table;
-    unordered_map_entry_t*  p_head;
-    unordered_map_entry_t*  p_tail;
+typedef struct unordered_set_t {
+    unordered_set_entry_t** p_table;
+    unordered_set_entry_t*  p_head;
+    unordered_set_entry_t*  p_tail;
     size_t                (*p_hash_function)(void*);
     bool                  (*p_equals_function)(void*, void*);
     size_t                  mod_count;
@@ -21,24 +20,22 @@ typedef struct unordered_map_t {
     size_t                  size;
     size_t                  mask;
     float                   load_factor;
-} unordered_map_t;
+} unordered_set_t;
 
-typedef struct unordered_map_iterator_t {
-    unordered_map_t*       p_map;
-    unordered_map_entry_t* p_next_entry;
+typedef struct unordered_set_iterator_t {
+    unordered_set_t*       p_map;
+    unordered_set_entry_t* p_next_entry;
     size_t                 iterated_count;
     size_t                 expected_mod_count;
-} unordered_map_iterator_t;
+} unordered_set_iterator_t;
 
-static unordered_map_entry_t* unordered_map_entry_t_alloc(void* p_key,
-                                                          void* p_value)
+static unordered_set_entry_t* unordered_set_entry_t_alloc(void* p_key)
 {
-    unordered_map_entry_t* p_ret = malloc(sizeof(*p_ret));
+    unordered_set_entry_t* p_ret = malloc(sizeof(*p_ret));
 
     if (!p_ret) return NULL;
 
     p_ret->p_key        = p_key;
-    p_ret->p_value      = p_value;
     p_ret->p_chain_next = NULL;
     p_ret->p_next       = NULL;
     p_ret->p_prev       = NULL;
@@ -82,12 +79,12 @@ static size_t fix_initial_capacity(size_t initial_capacity)
     return ret;
 }
 
-unordered_map_t* unordered_map_t_alloc(size_t initial_capacity,
+unordered_set_t* unordered_set_t_alloc(size_t initial_capacity,
                                        float load_factor,
                                        size_t (*p_hash_function)(void*),
                                        bool (*p_equals_function)(void*, void*))
 {
-    unordered_map_t* p_ret;
+    unordered_set_t* p_ret;
 
     if (!p_hash_function)   return NULL;
     if (!p_equals_function) return NULL;
@@ -106,7 +103,7 @@ unordered_map_t* unordered_map_t_alloc(size_t initial_capacity,
     p_ret->p_head            = NULL;
     p_ret->p_tail            = NULL;
     p_ret->p_table           = calloc(initial_capacity, 
-                                      sizeof(unordered_map_entry_t*));
+                                      sizeof(unordered_set_entry_t*));
     p_ret->p_hash_function   = p_hash_function;
     p_ret->p_equals_function = p_equals_function;
     p_ret->mask              = initial_capacity - 1;
@@ -114,141 +111,118 @@ unordered_map_t* unordered_map_t_alloc(size_t initial_capacity,
     return p_ret;
 }
 
-static void ensure_capacity(unordered_map_t* p_map) 
+static void ensure_capacity(unordered_set_t* p_set) 
 {
     size_t new_capacity;
     size_t new_mask;
     size_t index;
-    unordered_map_entry_t* p_entry;
-    unordered_map_entry_t** p_new_table;
+    unordered_set_entry_t*  p_entry;
+    unordered_set_entry_t** p_new_table;
 
-    if (p_map->size <= p_map->load_factor * p_map->table_capacity) return;
+    if (p_set->size <= p_set->load_factor * p_set->table_capacity) return;
 
-    new_capacity = 2 * p_map->table_capacity;
+    new_capacity = 2 * p_set->table_capacity;
     new_mask = new_capacity - 1;
-    p_new_table = calloc(new_capacity, sizeof(unordered_map_entry_t*));
+    p_new_table = calloc(new_capacity, sizeof(unordered_set_entry_t*));
 
     if (!p_new_table) return;
 
     /* Rehash the entries. */
-    for (p_entry = p_map->p_head; p_entry; p_entry = p_entry->p_next)
+    for (p_entry = p_set->p_head; p_entry; p_entry = p_entry->p_next)
     {
-        index = p_map->p_hash_function(p_entry->p_key) & new_mask;
+        index = p_set->p_hash_function(p_entry->p_key) & new_mask;
         p_entry->p_chain_next = p_new_table[index];
         p_new_table[index] = p_entry;
     }
 
-    free(p_map->p_table);
-    p_map->p_table        = p_new_table;
-    p_map->table_capacity = new_capacity;
-    p_map->mask           = new_mask;
+    free(p_set->p_table);
+    p_set->p_table        = p_new_table;
+    p_set->table_capacity = new_capacity;
+    p_set->mask           = new_mask;
 }
 
-void* unordered_map_t_put(unordered_map_t* p_map, void* p_key, void* p_value)
+bool unordered_set_t_add(unordered_set_t* p_set, void* p_key)
 {
     size_t index;
-    void* p_old_value;
-    unordered_map_entry_t* p_entry;
+    unordered_set_entry_t* p_entry;
 
-    if (!p_map) return NULL;
+    if (!p_set) return NULL;
 
-    index = p_map->p_hash_function(p_key) & p_map->mask;
+    index = p_set->p_hash_function(p_key) & p_set->mask;
 
-    for (p_entry = p_map->p_table[index]; 
+    for (p_entry = p_set->p_table[index]; 
          p_entry;
          p_entry = p_entry->p_chain_next)
     {
-        if (p_map->p_equals_function(p_entry->p_key, p_key))
+        if (p_set->p_equals_function(p_entry->p_key, p_key))
         {
-            p_old_value = p_entry->p_value;
-            p_entry->p_value = p_value;
-            return p_old_value;
+            return false;
         }
     }
 
-    ensure_capacity(p_map);
+    ensure_capacity(p_set);
 
     /* Recompute the index since it is possibly changed by 'ensure_capacity' */
-    index = p_map->p_hash_function(p_key) & p_map->mask;
-    p_entry               = unordered_map_entry_t_alloc(p_key, p_value);
-    p_entry->p_chain_next = p_map->p_table[index];
-    p_map->p_table[index] = p_entry;
+    index = p_set->p_hash_function(p_key) & p_set->mask;
+    p_entry               = unordered_set_entry_t_alloc(p_key);
+    p_entry->p_chain_next = p_set->p_table[index];
+    p_set->p_table[index] = p_entry;
 
     /* Link the new entry to the tail of the list. */
-    if (!p_map->p_tail)
+    if (!p_set->p_tail)
     {
-        p_map->p_head = p_entry;
-        p_map->p_tail = p_entry;
+        p_set->p_head = p_entry;
+        p_set->p_tail = p_entry;
     }
     else
     {
-        p_map->p_tail->p_next = p_entry;
-        p_entry->p_prev = p_map->p_tail;
-        p_map->p_tail = p_entry;
+        p_set->p_tail->p_next = p_entry;
+        p_entry->p_prev = p_set->p_tail;
+        p_set->p_tail = p_entry;
     }
 
-    p_map->size++;
-    p_map->mod_count++;
-    return NULL;
+    p_set->size++;
+    p_set->mod_count++;
+    return true;
 }
 
-bool unordered_map_t_contains_key(unordered_map_t* p_map, void* p_key)
+bool unordered_set_t_contains(unordered_set_t* p_set, void* p_key)
 {
     size_t index;
-    unordered_map_entry_t* p_entry;
+    unordered_set_entry_t* p_entry;
 
-    if (!p_map) return false;
+    if (!p_set) return false;
 
-    index = p_map->p_hash_function(p_key) & p_map->mask;
+    index = p_set->p_hash_function(p_key) & p_set->mask;
 
-    for (p_entry = p_map->p_table[index]; 
+    for (p_entry = p_set->p_table[index]; 
          p_entry; 
          p_entry = p_entry->p_chain_next) 
     {
-        if (p_map->p_equals_function(p_key, p_entry->p_key)) return true;
+        if (p_set->p_equals_function(p_key, p_entry->p_key)) return true;
     }
 
     return false;
 }
 
-void* unordered_map_t_get(unordered_map_t* p_map, void* p_key)
-{
-    size_t index;
-    unordered_map_entry_t* p_entry;
-
-    if (!p_map) return NULL;
-
-    index = p_map->p_hash_function(p_key) & p_map->mask;
-
-    for (p_entry = p_map->p_table[index];
-         p_entry;
-         p_entry = p_entry->p_chain_next)
-    {
-        if (p_map->p_equals_function(p_key, p_entry->p_key)) 
-            return p_entry->p_value;
-    }
-
-    return NULL;
-}
-
-void* unordered_map_t_remove(unordered_map_t* p_map, void* p_key)
+bool unordered_set_t_remove(unordered_set_t* p_set, void* p_key)
 {
     void*  p_ret;
     size_t index;
-    unordered_map_entry_t* p_prev_entry;
-    unordered_map_entry_t* p_current_entry;
+    unordered_set_entry_t* p_prev_entry;
+    unordered_set_entry_t* p_current_entry;
 
-    if (!p_map) return NULL;
+    if (!p_set) return false;
 
-    index = p_map->p_hash_function(p_key) & p_map->mask;
+    index = p_set->p_hash_function(p_key) & p_set->mask;
 
     p_prev_entry = NULL;
 
-    for (p_current_entry = p_map->p_table[index];
+    for (p_current_entry = p_set->p_table[index];
          p_current_entry;
          p_current_entry = p_current_entry->p_chain_next)
     {
-        if (p_map->p_equals_function(p_key, p_current_entry->p_key)) 
+        if (p_set->p_equals_function(p_key, p_current_entry->p_key)) 
         {
             if (p_prev_entry)
             {
@@ -258,7 +232,7 @@ void* unordered_map_t_remove(unordered_map_t* p_map, void* p_key)
             else
             {
                 // Here?
-                p_map->p_table[index] = p_current_entry->p_chain_next;
+                p_set->p_table[index] = p_current_entry->p_chain_next;
             }
 
             /* Unlink from the global iteration chain. */
@@ -272,39 +246,38 @@ void* unordered_map_t_remove(unordered_map_t* p_map, void* p_key)
             {
                 /* Once here, the current entry 
                    is the only entry in the chain. */
-                p_map->p_head = NULL;
-                p_map->p_tail = NULL;
+                p_set->p_head = NULL;
+                p_set->p_tail = NULL;
             }
             else if (p_current_entry->p_next)
             {
                 /* Once here, the current entry is the head of the chain. */
-                p_map->p_head = p_current_entry->p_next;
-                p_map->p_head->p_prev = NULL;
+                p_set->p_head = p_current_entry->p_next;
+                p_set->p_head->p_prev = NULL;
             }
             else
             {
                 /* Once here, the current entry is the tail of the chain. */
-                p_map->p_tail = p_current_entry->p_prev;
-                p_map->p_tail->p_next = NULL;
+                p_set->p_tail = p_current_entry->p_prev;
+                p_set->p_tail->p_next = NULL;
             }
 
-            p_ret = p_current_entry->p_value;
-            p_map->size--;
-            p_map->mod_count++;
+            p_set->size--;
+            p_set->mod_count++;
             free(p_current_entry);
-            return p_ret;
+            return true;
         }
 
         p_prev_entry = p_current_entry;
     }
 
-    return NULL;
+    return false;
 }
 
-void unordered_map_t_clear(unordered_map_t* p_map)
+void unordered_set_t_clear(unordered_set_t* p_map)
 {
-    unordered_map_entry_t* p_entry;
-    unordered_map_entry_t* p_next_entry;
+    unordered_set_entry_t* p_entry;
+    unordered_set_entry_t* p_next_entry;
     size_t index;
 
     if (!p_map) return;
@@ -330,15 +303,15 @@ void unordered_map_t_clear(unordered_map_t* p_map)
     p_map->p_tail = NULL;
 }
 
-int unordered_map_t_size(unordered_map_t* p_map)
+int unordered_set_t_size(unordered_set_t* p_set)
 {
-    return p_map ? p_map->size : -1;
+    return p_set ? p_set->size : -1;
 }
 
-bool unordered_map_t_is_healthy(unordered_map_t* p_map)
+bool unordered_set_t_is_healthy(unordered_set_t* p_map)
 {
     size_t counter;
-    unordered_map_entry_t* p_entry;
+    unordered_set_entry_t* p_entry;
 
     if (!p_map) return false;
 
@@ -355,67 +328,65 @@ bool unordered_map_t_is_healthy(unordered_map_t* p_map)
     return counter == p_map->size;
 }
 
-void unordered_map_t_free(unordered_map_t* p_map)
+void unordered_set_t_free(unordered_set_t* p_map)
 {
     if (!p_map) return;
 
-    unordered_map_t_clear(p_map);
+    unordered_set_t_clear(p_map);
     free(p_map->p_table);
     free(p_map);
 }
 
-unordered_map_iterator_t* 
-unordered_map_iterator_t_alloc(unordered_map_t* p_map)
+unordered_set_iterator_t* 
+unordered_set_iterator_t_alloc(unordered_set_t* p_set)
 {
-    unordered_map_iterator_t* p_ret;
+    unordered_set_iterator_t* p_ret;
 
-    if (!p_map) return NULL;
+    if (!p_set) return NULL;
 
     p_ret = malloc(sizeof(*p_ret));
 
     if (!p_ret) return NULL;
 
-    p_ret->p_map              = p_map;
+    p_ret->p_map              = p_set;
     p_ret->iterated_count     = 0;
-    p_ret->p_next_entry       = p_map->p_head;
-    p_ret->expected_mod_count = p_map->mod_count;
+    p_ret->p_next_entry       = p_set->p_head;
+    p_ret->expected_mod_count = p_set->mod_count;
 
     return p_ret;
 }
 
-int unordered_map_iterator_t_has_next(unordered_map_iterator_t* p_iterator)
+int unordered_set_iterator_t_has_next(unordered_set_iterator_t* p_iterator)
 {
     if (!p_iterator) return 0;
 
-    if (unordered_map_iterator_t_is_disturbed(p_iterator)) return 0;
+    if (unordered_set_iterator_t_is_disturbed(p_iterator)) return 0;
 
     return p_iterator->p_map->size - p_iterator->iterated_count;
 }
 
-bool unordered_map_iterator_t_next(unordered_map_iterator_t* p_iterator, 
-                                   void** pp_key, 
-                                   void** pp_value)
+bool unordered_set_iterator_t_next(unordered_set_iterator_t* p_iterator, 
+                                   void** pp_key)
 {
     if (!p_iterator)                                       return false;
     if (!p_iterator->p_next_entry)                         return false;
-    if (unordered_map_iterator_t_is_disturbed(p_iterator)) return false;
+    if (unordered_set_iterator_t_is_disturbed(p_iterator)) return false;
 
-    *pp_key   = p_iterator->p_next_entry->p_key;
-    *pp_value = p_iterator->p_next_entry->p_value;
+    *pp_key = p_iterator->p_next_entry->p_key;
     p_iterator->iterated_count++;
     p_iterator->p_next_entry = p_iterator->p_next_entry->p_next;
     return true;
 }
 
 bool
-unordered_map_iterator_t_is_disturbed(unordered_map_iterator_t* p_iterator)
+unordered_set_iterator_t_is_disturbed(unordered_set_iterator_t* p_iterator)
 {
     if (!p_iterator) false;
 
     return p_iterator->expected_mod_count != p_iterator->p_map->mod_count;
 }
 
-void unordered_map_iterator_t_free(unordered_map_iterator_t* p_iterator)
+void unordered_set_iterator_t_free(unordered_set_iterator_t* p_iterator)
 {
     if (!p_iterator) return;
 
@@ -423,3 +394,4 @@ void unordered_map_iterator_t_free(unordered_map_iterator_t* p_iterator)
     p_iterator->p_next_entry = NULL;
     free(p_iterator);
 }
+

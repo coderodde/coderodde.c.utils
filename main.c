@@ -4,6 +4,7 @@
 #include "map.h"
 #include "set.h"
 #include "unordered_map.h"
+#include "unordered_set.h"
 
 #define ASSERT(CONDITION) assert(CONDITION, #CONDITION, __FILE__, __LINE__)
 
@@ -442,7 +443,7 @@ void test_unordered_map_correctness()
     int expected_size;
     unordered_map_t* p_map = unordered_map_t_alloc(7, 0.4f, hash_function, equals_function);
     unordered_map_iterator_t* p_iterator;
-     
+    
     for (i = -10; i < 10; ++i) 
     {
         ASSERT(unordered_map_t_contains_key(p_map, (void*) i) == false);
@@ -547,12 +548,171 @@ void test_set_correctness()
     ASSERT(set_t_contains (p_set, (void*) 10) == false);
 }
 
+void test_unordered_set_correctness() 
+{
+    int i;
+    void* p_key;
+    int expected_size;
+    unordered_set_t* p_set = unordered_set_t_alloc(7, 0.8f, hash_function, equals_function);
+    unordered_set_iterator_t* p_iterator;
+    
+    for (i = -10; i < 10; ++i) 
+    {
+        ASSERT(unordered_set_t_contains(p_set, (void*) i) == false);
+        ASSERT(unordered_set_t_size(p_set) == (i + 10));
+        
+        ASSERT(unordered_set_t_add(p_set, (void*) i) == true);
+        
+        ASSERT(unordered_set_t_contains(p_set, (void*) i) == true);
+        ASSERT(unordered_set_t_size(p_set) == (i + 10) + 1);
+    }
+    
+    expected_size = unordered_set_t_size(p_set);
+    p_iterator = unordered_set_iterator_t_alloc(p_set);
+    ASSERT(expected_size == 20);
+    
+    for (i = -10; i < 10; ++i) 
+    {
+        ASSERT(unordered_set_iterator_t_has_next(p_iterator) == 10 - i);
+        ASSERT(unordered_set_iterator_t_next(p_iterator, &p_key) == true);
+        ASSERT((int) p_key == i);
+    }
+    
+    ASSERT(unordered_set_iterator_t_has_next(p_iterator) == 0);
+    ASSERT(unordered_set_t_size(p_set) == expected_size);
+    
+    unordered_set_t_clear(p_set);
+    
+    ASSERT(unordered_set_t_size(p_set) == 0);
+    
+    ASSERT(unordered_set_t_add      (p_set, (void*) 1));
+    ASSERT(unordered_set_t_size     (p_set) == 1);
+    ASSERT(unordered_set_t_add      (p_set, (void*) 1) == false);
+    ASSERT(unordered_set_t_size     (p_set) == 1);
+    ASSERT(unordered_set_t_contains (p_set, (void*) 1));
+    ASSERT(unordered_set_t_contains (p_set, (void*) 2) == false);
+    
+    ASSERT(unordered_set_t_contains (p_set, (void*) 10) == false);
+    ASSERT(unordered_set_t_add      (p_set, (void*) 10));
+    ASSERT(unordered_set_t_contains (p_set, (void*) 10));
+    ASSERT(unordered_set_t_remove   (p_set, (void*) 11) == false);
+    ASSERT(unordered_set_t_remove   (p_set, (void*) 10));
+    ASSERT(unordered_set_t_contains (p_set, (void*) 10) == false);
+}
+
+static void test_unordered_set_performance()
+{
+    unordered_set_t* p_set = unordered_set_t_alloc(7, 0.8f, hash_function, equals_function);
+    unordered_set_iterator_t* p_iterator;
+    
+    const int sz = 1000000;
+    
+    clock_t t;
+    double duration = 0.0;
+    int i;
+    int j;
+    int a;
+    int b;
+    int tmp;
+    void* p_element;
+    bool* p_check_list;
+    
+    int* array = malloc(sizeof(int) * sz);
+    p_check_list = calloc(sz, sizeof(bool));
+    
+    puts("--- PERFORMANCE OF UNORDERED_SET ---");
+    
+    for (i = 0; i < sz; ++i) 
+        array[i] = i;
+    
+    int time_ = time(NULL);
+    printf("Time: %d.\n", time_);
+    srand(time_);
+    
+    for (i = 0; i < sz; ++i)
+    {
+        a = rand() % sz;
+        b = rand() % sz;
+        
+        tmp = array[a];
+        array[a] = array[b];
+        array[b] = tmp;
+    }
+    
+    t = clock();
+    
+    for (i = 0; i < sz; ++i)
+    {
+        unordered_set_t_add(p_set, (void*) array[i]);
+    }
+    
+    duration += ((double) clock() - t);
+    
+    printf("Healthy: %d\n", unordered_set_t_is_healthy(p_set));
+    p_iterator = unordered_set_iterator_t_alloc(p_set);
+    
+    t = clock();
+    
+    while (unordered_set_iterator_t_has_next(p_iterator)) 
+    {
+        unordered_set_iterator_t_next(p_iterator, &p_element);
+        
+        p_check_list[(int) p_element] = true;
+    }
+    
+    duration += ((double) clock() - t);
+    
+    for (i = 0; i < sz; ++i) 
+    {
+        if (!p_check_list[i])
+        {
+            puts("Not all elements set.");
+            exit(1);
+        }
+    }
+    
+    t = clock();
+    
+    for (i = 0; i < 5; ++i) 
+        for (j = 0; j < sz; ++j) 
+            if (!unordered_set_t_contains(p_set, (void*) array[i])) 
+                exit(2);
+        
+    duration += ((double) clock() - t);
+    
+    t = clock();
+    
+    for (i = 0; i < sz; ++i) 
+    {
+        if(!ASSERT(unordered_set_t_remove(p_set, (void*) array[i])))
+        {
+            printf("Fails at index %d\n", i);
+            exit(3);
+        }
+    }
+    
+    duration += ((double) clock() - t);
+    printf("Healthy: %d\n", set_t_is_healthy(p_set));
+    
+    p_iterator = unordered_set_iterator_t_alloc(p_set);
+    
+    /* Empty iterator. */
+    while (unordered_map_iterator_t_has_next(p_iterator)) 
+    {
+        unordered_set_iterator_t_next(p_iterator, &p_element);
+    }
+    
+    printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);    
+}
+
 int main(int argc, char** argv) {
     test_unordered_map_correctness();
     test_unordered_map_performance();
-//    test_map_correctness();
-//    test_map_performance();
-//    test_set_correctness();
-//    test_set_performance();
+    test_unordered_set_correctness();
+    test_unordered_set_performance();
+    test_map_correctness();
+    test_map_performance();
+    test_set_correctness();
+    test_set_performance();
     return (EXIT_SUCCESS);
 }

@@ -10,7 +10,7 @@ extern "C" {
 
     typedef struct unordered_map_t          unordered_map_t;
     typedef struct unordered_map_iterator_t unordered_map_iterator_t;
-    
+
     /***************************************************************************
     * Allocates a new, empty map with given comparator function.               *
     ***************************************************************************/ 
@@ -98,7 +98,6 @@ extern "C" {
     * Deallocates the map iterator.                                            *
     ***************************************************************************/  
     void unordered_map_iterator_t_free(unordered_map_iterator_t* p_iterator);
-
 
 #ifdef	__cplusplus
 }
