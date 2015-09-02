@@ -5,6 +5,7 @@
 #include "set.h"
 #include "unordered_map.h"
 #include "unordered_set.h"
+#include "heap.h"
 
 #define ASSERT(CONDITION) assert(CONDITION, #CONDITION, __FILE__, __LINE__)
 
@@ -705,14 +706,43 @@ static void test_unordered_set_performance()
     printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);    
 }
 
+static int priority_cmp(void* a, void* b) 
+{
+    return a - b;
+}
+
+static void test_heap_correctness() 
+{
+    heap_t* p_heap;
+    size_t i;
+    
+    p_heap = heap_t_alloc(2, 10, 1.0f, hash_function, equals_function, priority_cmp);
+    puts("MEGASHIT");
+    
+    for (i = 0; i < 30; ++i) 
+    {
+        printf("%d\n", i);
+        heap_t_add(p_heap, i, 30 - i);
+    }
+    
+    ASSERT(heap_t_size(p_heap) == 30);
+}
+
+static void test_heap_performance()
+{
+    
+}
+
 int main(int argc, char** argv) {
-    test_unordered_map_correctness();
-    test_unordered_map_performance();
-    test_unordered_set_correctness();
-    test_unordered_set_performance();
-    test_map_correctness();
-    test_map_performance();
-    test_set_correctness();
-    test_set_performance();
+//    test_unordered_map_correctness();
+//    test_unordered_map_performance();
+//    test_unordered_set_correctness();
+//    test_unordered_set_performance();
+//    test_map_correctness();
+//    test_map_performance();
+//    test_set_correctness();
+//    test_set_performance();
+    test_heap_correctness();
+    test_heap_performance();
     return (EXIT_SUCCESS);
 }

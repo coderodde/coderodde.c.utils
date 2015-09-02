@@ -1,5 +1,6 @@
 #include "heap.h"
 #include "unordered_map.h"
+#include <stdbool.h>
 
 typedef struct heap_node_t {
     void*  p_element;
@@ -50,14 +51,14 @@ heap_t* heap_t_alloc(size_t degree,
                      float load_factor,
                      size_t (*p_hash_function)(void*),
                      bool (*p_equals_function)(void*, void*),
-                     int (*p_key_compare_function)(void*, void*))
+                     int (*p_priority_compare_function)(void*, void*))
 {
     heap_t* p_ret;
     unordered_map_t* p_map;
     
     if (!p_hash_function)        return NULL;
     if (!p_equals_function)      return NULL;
-    if (!p_key_compare_function) return NULL;
+    if (!p_priority_compare_function) return NULL;
     
     p_ret = malloc(sizeof(*p_ret));
     
@@ -102,14 +103,14 @@ heap_t* heap_t_alloc(size_t degree,
     p_ret->degree                 = degree;
     p_ret->p_hash_function        = p_hash_function;
     p_ret->p_equals_function      = p_equals_function;
-    p_ret->p_key_compare_function = p_key_compare_function;
+    p_ret->p_key_compare_function = p_priority_compare_function;
     
     return p_ret;
 }
 
 static size_t get_parent_index(heap_t* p_heap, size_t child_index)
 {
-    return (index - 1) / p_heap->degree;
+    return (child_index - 1) / p_heap->degree;
 }
 
 static void sift_up(heap_t* p_heap, size_t index)
@@ -120,7 +121,7 @@ static void sift_up(heap_t* p_heap, size_t index)
     
     if (index == 0) return;
     
-    parent_index = get_parent_index(index);
+    parent_index = get_parent_index(p_heap, index);
     p_target_node = p_heap->p_table[index];
     
     for (;;) 
@@ -211,10 +212,31 @@ static void sift_down_root(heap_t* p_heap)
     }
 }
 
-/***************************************************************************
-* Adds a new element and its priority to the heap only if it is not        *
-* already present.                                                         *
-***************************************************************************/  
+static bool ensure_capacity_before_add(heap_t* p_heap) 
+{
+    heap_node_t** p_new_table;
+    size_t        new_capacity;
+    size_t        i;
+    
+    if (p_heap->size < p_heap->capacity) 
+        return true;
+    
+    new_capacity = 3 * p_heap->capacity / 2;
+    p_new_table  = malloc(sizeof(heap_node_t*) * new_capacity);
+    
+    if (!p_new_table) return false;
+    
+    for (i = 0; i < p_heap->size; ++i)
+    {
+        p_new_table[i] = p_heap->p_table[i];
+    }
+    
+    free(p_heap->p_table);
+    p_heap->p_table  = p_new_table;
+    p_heap->capacity = new_capacity;
+    return true;
+}
+
 bool heap_t_add(heap_t* p_heap, void* p_element, void* p_priority)
 {
     heap_node_t* p_node;
@@ -224,10 +246,12 @@ bool heap_t_add(heap_t* p_heap, void* p_element, void* p_priority)
     /* Already in the heap? */
     if (unordered_map_t_contains_key(p_heap->p_node_map, p_element)) 
         return false; 
-    
     p_node = heap_node_t_alloc(p_element, p_priority);
     
     if (!p_node) return false;
+    
+    if (!ensure_capacity_before_add(p_heap)) 
+        return false;
     
     p_node->index = p_heap->size;
     p_heap->p_table[p_heap->size] = p_node;
@@ -237,34 +261,83 @@ bool heap_t_add(heap_t* p_heap, void* p_element, void* p_priority)
     return true;
 }
 
-/***************************************************************************
-* Attempts to assign a higher priority to the 'element'. Return true only  *       
-* if the structure of the heap changed due to this call.                   * 
-***************************************************************************/  
-bool heap_t_decrease_key(heap_t* p_heap, void* p_element, void* p_priority);
+bool heap_t_decrease_key(heap_t* p_heap, void* p_element, void* p_priority)
+{
+    heap_node_t* p_node;
+    
+    if (!p_heap) return false;
+    
+    if (!unordered_map_t_contains_key(p_heap->p_node_map, p_element)) 
+        return false;
+    
+    p_node = unordered_map_t_get(p_heap->p_node_map, p_element);
+    
+    if (p_heap->p_key_compare_function(p_priority, p_node->p_priority) < 0)
+    {
+        p_node->p_priority = p_priority;
+        sift_up(p_heap, p_node->index);
+        return true;
+    }
+    
+    return false;
+}
 
-/***************************************************************************
-* Return true only if 'p_element' is in the heap.                          * 
-***************************************************************************/  
-bool heap_t_contains_key(heap_t* p_heap, void* p_element);
+bool heap_t_contains_key(heap_t* p_heap, void* p_element)
+{
+    if (!p_heap) return false;
+    
+    return unordered_map_t_contains_key(p_heap->p_node_map, p_element);
+}
 
-/***************************************************************************
-* Removes the highest priority element and returns it.                     * 
-***************************************************************************/  
-void* heap_t_extract_min(heap_t* p_heap);
+void* heap_t_extract_min(heap_t* p_heap)
+{
+    void* p_ret;
+    heap_node_t* p_node;
+    
+    if (!p_heap)           return NULL;
+    if (p_heap->size == 0) return NULL;
+    
+    p_node = p_heap->p_table[0];
+    p_ret = p_node->p_element;
+    p_heap->p_table[0] = p_heap->p_table[--p_heap->size];
+    free(p_node);
+    unordered_map_t_remove(p_heap->p_node_map, p_ret);
+    sift_down_root(p_heap);
+    return p_ret;
+}
 
-/***************************************************************************
-* Returns the highest priority element without removing it.                * 
-***************************************************************************/  
-void* heap_t_min(heap_t* p_heap);
+void* heap_t_min(heap_t* p_heap)
+{
+    if (!p_heap)           return NULL;
+    if (p_heap->size == 0) return NULL;
+    return p_heap->p_table[0]->p_element;
+}
 
-/***************************************************************************
-* Returns the size of this heap.                                           * 
-***************************************************************************/  
-size_t heap_t_size(heap_t* p_heap);
+int heap_t_size(heap_t* p_heap)
+{
+    return p_heap ? p_heap->size : -1;
+}
 
-/***************************************************************************
-* Drops all the contents of the heap. Only internal structures are         *
-* deallocated; the user is responsible for memory-managing the contents.   * 
-***************************************************************************/  
-void heap_t_clear(heap_t* p_heap);
+void heap_t_clear(heap_t* p_heap)
+{
+    size_t i;
+    
+    if (!p_heap) return;
+    
+    unordered_map_t_clear(p_heap->p_node_map);
+    
+    for (i = 0; i < p_heap->size; ++i)
+    {
+        free(p_heap->p_table[i]);
+    }
+}
+
+void heap_t_free(heap_t* p_heap) 
+{
+    if (!p_heap) return;
+    
+    heap_t_clear(p_heap);
+    unordered_map_t_free(p_heap->p_node_map);
+    free(p_heap->p_indices);
+    free(p_heap->p_table);
+}

@@ -1,6 +1,9 @@
 #ifndef HEAP_H
 #define	HEAP_H
 
+#include <stdbool.h>
+#include <stdlib.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -15,7 +18,7 @@ extern "C" {
                          float load_factor,
                          size_t (*p_hash_function)(void*),
                          bool (*p_equals_function)(void*, void*),
-                         int (*p_key_compare_function)(void*, void*));
+                         int (*p_priority_compare_function)(void*, void*));
     
     /***************************************************************************
     * Adds a new element and its priority to the heap only if it is not        *
@@ -47,13 +50,19 @@ extern "C" {
     /***************************************************************************
     * Returns the size of this heap.                                           * 
     ***************************************************************************/  
-    size_t heap_t_size(heap_t* p_heap);
+    int heap_t_size(heap_t* p_heap);
     
     /***************************************************************************
     * Drops all the contents of the heap. Only internal structures are         *
     * deallocated; the user is responsible for memory-managing the contents.   * 
     ***************************************************************************/  
     void heap_t_clear(heap_t* p_heap);
+    
+    /***************************************************************************
+    * Deallocates the entire heap with its internal structures. The client     *
+    * programmer must, however, memory-manage the contents.                    * 
+    ***************************************************************************/  
+    void heap_t_free(heap_t* p_heap);
 
 #ifdef	__cplusplus
 }
