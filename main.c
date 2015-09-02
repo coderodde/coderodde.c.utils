@@ -785,12 +785,13 @@ static void test_heap_performance()
     size_t i;
     clock_t t;
     const size_t sz = 1000000;
-    double duration = 0.0;
+    double duration;
     
     puts("--- PERFORMANCE OF HEAP ---");
     
-    for (degree = 2; degree <= 6; ++degree)
+    for (degree = 2; degree <= 10; ++degree)
     {
+        duration = 0.0;
         printf("Degree %d:\n", degree);
         p_heap = heap_t_alloc(degree,
                               10,
@@ -819,8 +820,6 @@ static void test_heap_performance()
         {
             heap_t_extract_min(p_heap);
         }
-        
-        puts("MEGASHIT");
         
         duration += ((double) clock() - t);
         
