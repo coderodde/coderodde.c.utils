@@ -718,6 +718,8 @@ static void test_heap_correctness()
     
     p_heap = heap_t_alloc(2, 10, 1.0f, hash_function, equals_function, priority_cmp);
     
+    ASSERT(heap_t_is_healthy(p_heap));
+    
     for (i = 0; i < 30; ++i) 
     {
         ASSERT(heap_t_add(p_heap, i, 30 - i));
@@ -740,12 +742,15 @@ static void test_heap_correctness()
         ASSERT(heap_t_contains_key(p_heap, i) == false);
     }
     
+    ASSERT(heap_t_is_healthy(p_heap));
+    
     for (i = 29; i != (size_t) -1; --i) 
     {
         ASSERT(heap_t_extract_min(p_heap) == i);
     }
     
     ASSERT(heap_t_size(p_heap) == 0);
+    ASSERT(heap_t_is_healthy(p_heap));
     
     for (i = 10; i < 100; ++i) 
     {
@@ -777,19 +782,51 @@ static void test_heap_performance()
 {
     heap_t* p_heap;
     size_t degree;
+    size_t i;
+    clock_t t;
+    const size_t sz = 1000000;
+    double duration = 0.0;
+    
+    puts("--- PERFORMANCE OF HEAP ---");
     
     for (degree = 2; degree <= 6; ++degree)
     {
+        printf("Degree %d:\n", degree);
         p_heap = heap_t_alloc(degree,
                               10,
                               1.0f,
                               hash_function,
                               equals_function,
                               priority_cmp);
+        t = clock();
         
+        for (i = 0; i < sz; ++i) 
+        {
+            heap_t_add(p_heap, i, 500000 + sz - i);
+        }
         
+        /* State: 999999, 999998, 999997, ... */
+        ASSERT(heap_t_is_healthy(p_heap));
+        
+        for (i = sz / 2; i < sz; ++i)
+        {
+            heap_t_decrease_key(p_heap, i, i);
+        }
+        
+        ASSERT(heap_t_is_healthy(p_heap));
+        
+        for (i = 0; i < sz; ++i)
+        {
+            heap_t_extract_min(p_heap);
+        }
+        
+        puts("MEGASHIT");
+        
+        duration += ((double) clock() - t);
         
         heap_t_free(p_heap);
+        
+        printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);
     }
 }
 

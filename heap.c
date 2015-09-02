@@ -120,12 +120,12 @@ static void sift_up(heap_t* p_heap, size_t index)
     heap_node_t* p_parent_node;
     
     if (index == 0) return;
+    
     parent_index = get_parent_index(p_heap, index);
     p_target_node = p_heap->p_table[index];
     
     for (;;) 
     {
-//        printf("parent_index: %d\n", parent_index);
         p_parent_node = p_heap->p_table[parent_index];
         
         if (p_heap->p_key_compare_function(p_parent_node->p_priority,
@@ -163,6 +163,45 @@ static void compute_children_indices(heap_t* p_heap, size_t index)
             return;
         }
     }
+}
+
+bool heap_t_is_healthy(heap_t* p_heap)
+{
+    size_t i;
+    size_t j;
+    size_t child_index;
+    
+    if (!p_heap) return false;
+    
+    for (i = 0; i < p_heap->size; ++i) 
+    {
+        /* Check that all the children of the current node has priorities no
+           less than the node itself. */
+        compute_children_indices(p_heap, i);
+        
+        for (j = 0; j < p_heap->degree; ++j) 
+        {
+            child_index = p_heap->p_indices[j];
+            
+            if (child_index != (size_t) -1)
+            {
+                if (p_heap->
+                        p_key_compare_function(
+                            p_heap->p_table[i]->p_priority, 
+                            p_heap->p_table[child_index]->p_priority) > 0)
+                {
+                    printf("SHIT, %d > %d\n", p_heap->p_table[i]->p_priority, p_heap->p_table[child_index]->p_priority);
+                    return false;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    
+    return true;
 }
 
 static void sift_down_root(heap_t* p_heap) 
@@ -219,7 +258,6 @@ static bool ensure_capacity_before_add(heap_t* p_heap)
     heap_node_t** p_new_table;
     size_t        new_capacity;
     size_t        i;
-    
     if (p_heap->size < p_heap->capacity) 
         return true;
     
@@ -248,6 +286,7 @@ bool heap_t_add(heap_t* p_heap, void* p_element, void* p_priority)
     /* Already in the heap? */
     if (unordered_map_t_contains_key(p_heap->p_node_map, p_element)) 
         return false; 
+    
     p_node = heap_node_t_alloc(p_element, p_priority);
     
     if (!p_node) return false;
@@ -301,10 +340,11 @@ void* heap_t_extract_min(heap_t* p_heap)
     
     p_node = p_heap->p_table[0];
     p_ret = p_node->p_element;
-    p_heap->p_table[0] = p_heap->p_table[--p_heap->size];
-    free(p_node);
+    p_heap->size--;
+    p_heap->p_table[0] = p_heap->p_table[p_heap->size];
     unordered_map_t_remove(p_heap->p_node_map, p_ret);
     sift_down_root(p_heap);
+    free(p_node);
     return p_ret;
 }
 

@@ -59,6 +59,11 @@ extern "C" {
     void heap_t_clear(heap_t* p_heap);
     
     /***************************************************************************
+    * Checks that the heap maintains the min-heap property.                    *
+    ***************************************************************************/  
+    bool heap_t_is_healthy(heap_t* p_heap);
+    
+    /***************************************************************************
     * Deallocates the entire heap with its internal structures. The client     *
     * programmer must, however, memory-manage the contents.                    * 
     ***************************************************************************/  
