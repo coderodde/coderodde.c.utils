@@ -113,6 +113,9 @@ static size_t get_parent_index(heap_t* p_heap, size_t child_index)
     return (child_index - 1) / p_heap->degree;
 }
 
+/*******************************************************************************
+* Sifts up the node until the minimum heap property is restored.               * 
+*******************************************************************************/
 static void sift_up(heap_t* p_heap, size_t index)
 {
     size_t parent_index;
@@ -148,6 +151,9 @@ static void sift_up(heap_t* p_heap, size_t index)
     p_target_node->index = index;
 }
 
+/*******************************************************************************
+* Loads the indices of child nodes relative to the node with index 'index'.    * 
+*******************************************************************************/
 static void compute_children_indices(heap_t* p_heap, size_t index)
 {
     size_t degree = p_heap->degree;
@@ -204,6 +210,10 @@ bool heap_t_is_healthy(heap_t* p_heap)
     return true;
 }
 
+/*******************************************************************************
+* Sifts down the node at the root to location that maintains the minimum heap  *
+* property.                                                                    *  
+*******************************************************************************/
 static void sift_down_root(heap_t* p_heap) 
 {
     heap_node_t* p_target = p_heap->p_table[0];
@@ -253,6 +263,9 @@ static void sift_down_root(heap_t* p_heap)
     }
 }
 
+/*******************************************************************************
+* Makes sure that the heap has more room for new elements.                     *
+*******************************************************************************/  
 static bool ensure_capacity_before_add(heap_t* p_heap) 
 {
     heap_node_t** p_new_table;
