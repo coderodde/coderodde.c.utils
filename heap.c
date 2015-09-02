@@ -120,12 +120,12 @@ static void sift_up(heap_t* p_heap, size_t index)
     heap_node_t* p_parent_node;
     
     if (index == 0) return;
-    
     parent_index = get_parent_index(p_heap, index);
     p_target_node = p_heap->p_table[index];
     
     for (;;) 
     {
+//        printf("parent_index: %d\n", parent_index);
         p_parent_node = p_heap->p_table[parent_index];
         
         if (p_heap->p_key_compare_function(p_parent_node->p_priority,
@@ -140,6 +140,8 @@ static void sift_up(heap_t* p_heap, size_t index)
         {
             break;
         }
+        
+        if (index == 0) break;
     }
     
     p_heap->p_table[index] = p_target_node;

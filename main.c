@@ -717,20 +717,80 @@ static void test_heap_correctness()
     size_t i;
     
     p_heap = heap_t_alloc(2, 10, 1.0f, hash_function, equals_function, priority_cmp);
-    puts("MEGASHIT");
     
     for (i = 0; i < 30; ++i) 
     {
-        printf("%d\n", i);
-        heap_t_add(p_heap, i, 30 - i);
+        ASSERT(heap_t_add(p_heap, i, 30 - i));
+    }
+    
+    for (i = 0; i < 30; ++i)
+    {
+        ASSERT(!heap_t_add(p_heap, i, i));
     }
     
     ASSERT(heap_t_size(p_heap) == 30);
+    
+    for (i = 0; i < 30; ++i) 
+    {
+        ASSERT(heap_t_contains_key(p_heap, i));
+    }
+    
+    for (i = 30; i < 40; ++i) 
+    {
+        ASSERT(heap_t_contains_key(p_heap, i) == false);
+    }
+    
+    for (i = 29; i != (size_t) -1; --i) 
+    {
+        ASSERT(heap_t_extract_min(p_heap) == i);
+    }
+    
+    ASSERT(heap_t_size(p_heap) == 0);
+    
+    for (i = 10; i < 100; ++i) 
+    {
+        ASSERT(heap_t_add(p_heap, i, i));
+    }
+    
+    ASSERT(heap_t_decrease_key(p_heap, 50, 0));
+    
+    ASSERT(heap_t_min(p_heap) == 50);
+    ASSERT(heap_t_extract_min(p_heap) == 50);
+    
+    for (i = 10; i < 50; ++i) 
+    {
+        ASSERT(heap_t_min(p_heap) == i);
+        ASSERT(heap_t_extract_min(p_heap) == i);
+    }
+    
+    for (i = 51; i < 100; ++i) 
+    {
+        ASSERT(heap_t_min(p_heap) == i);
+        ASSERT(heap_t_extract_min(p_heap) == i);
+    }
+    
+    ASSERT(heap_t_min(p_heap) == NULL);
+    ASSERT(heap_t_extract_min(p_heap) == NULL);
 }
 
 static void test_heap_performance()
 {
+    heap_t* p_heap;
+    size_t degree;
     
+    for (degree = 2; degree <= 6; ++degree)
+    {
+        p_heap = heap_t_alloc(degree,
+                              10,
+                              1.0f,
+                              hash_function,
+                              equals_function,
+                              priority_cmp);
+        
+        
+        
+        heap_t_free(p_heap);
+    }
 }
 
 int main(int argc, char** argv) {
