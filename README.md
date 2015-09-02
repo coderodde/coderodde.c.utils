@@ -5,7 +5,7 @@ The main aim of this project is to provide implementations of most fundamental d
 ### TODO:
 - [x] `map_t` (a ordered map using a AVL-tree)
 - [x] `set_t` (a ordered set using a AVL-tree)
-- [x] `unordered_map_t` (a unordered map using a hash table, under development)
+- [x] `unordered_map_t` (a unordered map using a hash table)
 - [x] `unordered_set_t` (a unordered set using a hash table)
 - [x] `heap_t` (a `d`-ary heap)
 - [ ] `list_t` (an array based list supporting fast insertion/removal from both ends)
