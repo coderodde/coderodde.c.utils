@@ -46,7 +46,7 @@ static unordered_map_entry_t* unordered_map_entry_t_alloc(void* p_key,
     return p_ret;
 }
 
-static const float  MINIMUM_LOAD_FACTOR = 0.05f;
+static const float  MINIMUM_LOAD_FACTOR = 0.2f;
 static const size_t MINIMUM_INITIAL_CAPACITY = 16;
 
 static float maxf(float a, float b) 
@@ -117,41 +117,34 @@ unordered_map_t* unordered_map_t_alloc(size_t initial_capacity,
 static void ensure_capacity(unordered_map_t* p_map) 
 {
     size_t new_capacity;
+    size_t new_mask;
     size_t index;
     unordered_map_entry_t* p_entry;
+    unordered_map_entry_t** p_new_table;
     
     if (p_map->size <= p_map->load_factor * p_map->table_capacity) return;
-        
+    
+//    puts("ENSURE MEGASHIT");
+    
     new_capacity = 2 * p_map->table_capacity;
-    unordered_map_entry_t** p_new_table = 
-            calloc(new_capacity, sizeof(unordered_map_entry_t*));
+    new_mask = new_capacity - 1;
+    p_new_table = calloc(new_capacity, sizeof(unordered_map_entry_t*));
     
     if (!p_new_table) return;
     
     /* Rehash the entries. */
-    for (p_entry = p_map->p_head; !p_entry; p_entry = p_entry->p_next)
+    for (p_entry = p_map->p_head; p_entry; p_entry = p_entry->p_next)
     {
-        index = p_map->p_hash_function(p_entry->p_value) & new_capacity;
-        
-        if (p_new_table[index])
-        {
-            p_entry->p_chain_next = p_new_table[index];
-            p_new_table[index] = p_entry;
-        } 
-        else
-        {
-            p_new_table[index] = p_entry;
-            p_entry->p_chain_next = NULL;
-        }
+        index = p_map->p_hash_function(p_entry->p_key) & new_mask;
+//        printf("Shitsu: %p, index: %d, entry: %p\n", p_new_table, index, p_entry);
+        p_entry->p_chain_next = p_new_table[index];
+        p_new_table[index] = p_entry;
     }
     
     free(p_map->p_table);
-    
     p_map->p_table        = p_new_table;
     p_map->table_capacity = new_capacity;
-    p_map->mask           = new_capacity - 1;
-    
-    return;
+    p_map->mask           = new_mask;
 }
 
 void* unordered_map_t_put(unordered_map_t* p_map, void* p_key, void* p_value)
@@ -162,7 +155,6 @@ void* unordered_map_t_put(unordered_map_t* p_map, void* p_key, void* p_value)
     
     if (!p_map) return NULL;
     
-    ensure_capacity(p_map);
     index = p_map->p_hash_function(p_key) & p_map->mask;
     
     for (p_entry = p_map->p_table[index]; 
@@ -177,6 +169,10 @@ void* unordered_map_t_put(unordered_map_t* p_map, void* p_key, void* p_value)
         }
     }
     
+    ensure_capacity(p_map);
+    
+    /* Recompute the index since it is possibly changed by 'ensure_capacity' */
+    index = p_map->p_hash_function(p_key) & p_map->mask;
     p_entry               = unordered_map_entry_t_alloc(p_key, p_value);
     p_entry->p_chain_next = p_map->p_table[index];
     p_map->p_table[index] = p_entry;
@@ -264,6 +260,7 @@ void* unordered_map_t_remove(unordered_map_t* p_map, void* p_key)
             }
             else
             {
+                // Here?
                 p_map->p_table[index] = p_current_entry->p_chain_next;
             }
             
@@ -311,6 +308,7 @@ void unordered_map_t_clear(unordered_map_t* p_map)
 {
     unordered_map_entry_t* p_entry;
     unordered_map_entry_t* p_next_entry;
+    size_t index;
     
     if (!p_map) return;
 
@@ -318,9 +316,15 @@ void unordered_map_t_clear(unordered_map_t* p_map)
     
     while (p_entry)
     {
+        index = p_map->p_hash_function(p_entry->p_key) & p_map->mask;
         p_next_entry = p_entry->p_next;
         free(p_entry);
         p_entry = p_next_entry;
+        
+        if (p_map->p_table[index])
+        {
+            p_map->p_table[index] = p_map->p_table[index]->p_chain_next;
+        }
     }
     
     p_map->mod_count += p_map->size;
@@ -338,13 +342,13 @@ bool unordered_map_t_is_healthy(unordered_map_t* p_map)
 {
     size_t counter;
     unordered_map_entry_t* p_entry;
-    
+ 
     if (!p_map) return false;
     
     counter = 0;
     p_entry = p_map->p_head;
     
-    if (!p_entry->p_prev) return false;
+    if (p_entry && p_entry->p_prev) return false;
     
     for (; p_entry; p_entry = p_entry->p_next)
     {
