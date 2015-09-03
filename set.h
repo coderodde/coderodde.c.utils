@@ -17,8 +17,8 @@ extern "C" {
     set_t* set_t_alloc        (int (*p_comparator)(void*, void*));
 
     /***************************************************************************
-    * Adds 'p_element' to the set if not already there. Returns true if the    *
-    * structure of the tree changed.                                           * 
+    * Adds an element to the set if not already there. Returns true if the     *
+    * structure of the set changed.                                            * 
     ***************************************************************************/ 
     bool  set_t_add          (set_t* p_set, void* p_element);
 
@@ -28,22 +28,23 @@ extern "C" {
     bool  set_t_contains     (set_t* p_set, void* p_element);
 
     /***************************************************************************
-    * If 'p_element' is in 'p_set', removes it and returns true.               * 
+    * If the element is in the set, removes it and returns true.               * 
     ***************************************************************************/ 
     bool  set_t_remove       (set_t* p_set, void* p_element);
 
     /***************************************************************************
-    * Removes all the contents of the set.                                     * 
+    * Removes all the contents of the set. The client programmer is responsible*
+    * for deallocating the actual contents.                                    * 
     ***************************************************************************/ 
     void   set_t_clear        (set_t* p_set);
 
     /***************************************************************************
     * Returns the size of the set.                                             *
     ***************************************************************************/ 
-    int    set_t_size         (set_t* p_set);
+    size_t set_t_size         (set_t* p_set);
 
     /***************************************************************************
-    * Checks that the set maintains the AVL-tree invariant.                    *
+    * Checks that the set maintains the AVL-tree property.                     *
     ***************************************************************************/  
     bool   set_t_is_healthy   (set_t* p_set);
 
@@ -62,10 +63,10 @@ extern "C" {
     /***************************************************************************
     * Returns the number of elements not yet iterated over.                    *
     ***************************************************************************/ 
-    int             set_iterator_t_has_next     (set_iterator_t* p_iterator);
+    size_t          set_iterator_t_has_next     (set_iterator_t* p_iterator);
 
     /***************************************************************************
-    * Sets to 'pp_element' the next element in the iteration order.            *
+    * Loads the next element in the iteration order.                           *
     ***************************************************************************/  
     bool            set_iterator_t_next         (set_iterator_t* p_iterator, 
                                                  void** pp_element);

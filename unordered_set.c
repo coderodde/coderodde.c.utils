@@ -19,6 +19,7 @@ typedef struct unordered_set_t {
     size_t                  table_capacity;
     size_t                  size;
     size_t                  mask;
+    size_t                  max_allowed_size;
     float                   load_factor;
 } unordered_set_t;
 
@@ -107,6 +108,7 @@ unordered_set_t* unordered_set_t_alloc(size_t initial_capacity,
     p_ret->p_hash_function   = p_hash_function;
     p_ret->p_equals_function = p_equals_function;
     p_ret->mask              = initial_capacity - 1;
+    p_ret->max_allowed_size  = (size_t)(initial_capacity * load_factor);
 
     return p_ret;
 }
@@ -119,8 +121,8 @@ static void ensure_capacity(unordered_set_t* p_set)
     unordered_set_entry_t*  p_entry;
     unordered_set_entry_t** p_new_table;
 
-    if (p_set->size <= p_set->load_factor * p_set->table_capacity) return;
-
+    if (p_set->size < p_set->max_allowed_size) return;
+    
     new_capacity = 2 * p_set->table_capacity;
     new_mask = new_capacity - 1;
     p_new_table = calloc(new_capacity, sizeof(unordered_set_entry_t*));
@@ -136,9 +138,11 @@ static void ensure_capacity(unordered_set_t* p_set)
     }
 
     free(p_set->p_table);
-    p_set->p_table        = p_new_table;
-    p_set->table_capacity = new_capacity;
-    p_set->mask           = new_mask;
+    
+    p_set->p_table          = p_new_table;
+    p_set->table_capacity   = new_capacity;
+    p_set->mask             = new_mask;
+    p_set->max_allowed_size = (size_t)(new_capacity * p_set->load_factor);
 }
 
 bool unordered_set_t_add(unordered_set_t* p_set, void* p_key)
@@ -303,9 +307,9 @@ void unordered_set_t_clear(unordered_set_t* p_map)
     p_map->p_tail = NULL;
 }
 
-int unordered_set_t_size(unordered_set_t* p_set)
+size_t unordered_set_t_size(unordered_set_t* p_set)
 {
-    return p_set ? p_set->size : -1;
+    return p_set ? p_set->size : 0;
 }
 
 bool unordered_set_t_is_healthy(unordered_set_t* p_map)
@@ -356,7 +360,7 @@ unordered_set_iterator_t_alloc(unordered_set_t* p_set)
     return p_ret;
 }
 
-int unordered_set_iterator_t_has_next(unordered_set_iterator_t* p_iterator)
+size_t unordered_set_iterator_t_has_next(unordered_set_iterator_t* p_iterator)
 {
     if (!p_iterator) return 0;
 

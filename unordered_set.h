@@ -12,7 +12,8 @@ extern "C" {
     typedef struct unordered_set_iterator_t unordered_set_iterator_t;
 
     /***************************************************************************
-    * Allocates a new, empty set with given comparator function.               *
+    * Allocates a new, empty set with given hash function and given equality   *
+    * testing function.                                                        * 
     ***************************************************************************/ 
     unordered_set_t* unordered_set_t_alloc 
             (size_t initial_capacity,
@@ -22,7 +23,7 @@ extern "C" {
 
     /***************************************************************************
     * Adds 'p_element' to the set if not already there. Returns true if the    *
-    * structure of the tree changed.                                           * 
+    * structure of the set changed.                                            * 
     ***************************************************************************/ 
     bool  unordered_set_t_add (unordered_set_t* p_set, void* p_element);
 
@@ -32,7 +33,7 @@ extern "C" {
     bool  unordered_set_t_contains (unordered_set_t* p_set, void* p_element);
 
     /***************************************************************************
-    * If 'p_element' is in 'p_set', removes it and returns true.               * 
+    * If the element is in the set, removes it and returns true.               * 
     ***************************************************************************/ 
     bool  unordered_set_t_remove (unordered_set_t* p_set, void* p_element);
 
@@ -44,10 +45,10 @@ extern "C" {
     /***************************************************************************
     * Returns the size of the set.                                             *
     ***************************************************************************/ 
-    int    unordered_set_t_size (unordered_set_t* p_set);
+    size_t unordered_set_t_size (unordered_set_t* p_set);
 
     /***************************************************************************
-    * Checks that the set maintains the AVL-tree invariant.                    *
+    * Checks that the set is in valid state.                                   *
     ***************************************************************************/  
     bool   unordered_set_t_is_healthy (unordered_set_t* p_set);
 
@@ -59,7 +60,8 @@ extern "C" {
     void   unordered_set_t_free (unordered_set_t* p_set);
 
     /***************************************************************************
-    * Returns the iterator over the set. The nodes are iterated in order.      *
+    * Returns the iterator over the set. The nodes are iterated in insertion   *
+    * order.                                                                   * 
     ***************************************************************************/  
     unordered_set_iterator_t* unordered_set_iterator_t_alloc 
                              (unordered_set_t* p_set);
@@ -67,10 +69,12 @@ extern "C" {
     /***************************************************************************
     * Returns the number of elements not yet iterated over.                    *
     ***************************************************************************/ 
-    int unordered_set_iterator_t_has_next(unordered_set_iterator_t* p_iterator);
+    size_t unordered_set_iterator_t_has_next
+          (unordered_set_iterator_t* p_iterator);
 
     /***************************************************************************
-    * Sets to 'pp_element' the next element in the iteration order.            *
+    * Loads the next element in the iteration order. Returns true if advanced  *
+    * to the next element.                                                     * 
     ***************************************************************************/  
     bool unordered_set_iterator_t_next (unordered_set_iterator_t* p_iterator, 
                                         void** pp_element);

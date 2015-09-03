@@ -528,9 +528,9 @@ void set_t_clear(set_t* p_set)
     p_set->size = 0;
 }
 
-int set_t_size(set_t* p_set) 
+size_t set_t_size(set_t* p_set) 
 {
-    return p_set ? p_set->size : -1;
+    return p_set ? p_set->size : 0;
 }
 
 set_iterator_t* set_iterator_t_alloc(set_t* p_set)
@@ -544,9 +544,9 @@ set_iterator_t* set_iterator_t_alloc(set_t* p_set)
     return p_iterator;
 }
 
-int set_iterator_t_has_next(set_iterator_t* p_iterator) 
+size_t set_iterator_t_has_next(set_iterator_t* p_iterator) 
 {
-    if (!p_iterator) return false;
+    if (!p_iterator) return 0;
 
     /** If the map was modified, stop iteration. */
     if (set_iterator_t_is_disturbed(p_iterator)) return 0;

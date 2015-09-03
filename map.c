@@ -556,9 +556,9 @@ void map_t_clear(map_t* p_map)
     p_map->size = 0;
 }
 
-int map_t_size(map_t* p_map) 
+size_t map_t_size(map_t* p_map) 
 {
-    return p_map ? p_map->size : -1;
+    return p_map ? p_map->size : 0;
 }
 
 map_iterator_t* map_iterator_t_alloc(map_t* p_map)
@@ -572,9 +572,9 @@ map_iterator_t* map_iterator_t_alloc(map_t* p_map)
     return p_iterator;
 }
 
-int map_iterator_t_has_next(map_iterator_t* p_iterator) 
+size_t map_iterator_t_has_next(map_iterator_t* p_iterator) 
 {
-    if (!p_iterator) return false;
+    if (!p_iterator) return 0;
 
     /** If the map was modified, stop iteration. */
     if (map_iterator_t_is_disturbed(p_iterator)) return 0;

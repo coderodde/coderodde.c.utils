@@ -23,12 +23,12 @@ typedef struct heap_t {
 static heap_node_t* heap_node_t_alloc(void* p_element, void* p_priority) 
 {
     heap_node_t* p_ret = malloc(sizeof(*p_ret));
-    
+
     if (!p_ret) return NULL;
-    
+
     p_ret->p_element = p_element;
     p_ret->p_priority = p_priority;
-    
+
     return p_ret;
 }
 
@@ -55,40 +55,40 @@ heap_t* heap_t_alloc(size_t degree,
 {
     heap_t* p_ret;
     unordered_map_t* p_map;
-    
+
     if (!p_hash_function)        return NULL;
     if (!p_equals_function)      return NULL;
     if (!p_priority_compare_function) return NULL;
-    
+
     p_ret = malloc(sizeof(*p_ret));
-    
+
     if (!p_ret) return NULL;
-    
+
     p_map = unordered_map_t_alloc(initial_capacity,
                                   load_factor,
                                   p_hash_function,
                                   p_equals_function);
-    
+
     if (!p_map) 
     {
         free(p_ret);
         return NULL;
     }
-    
+
     degree = fix_degree(degree);
     initial_capacity = fix_initial_capacity(initial_capacity);
-    
+
     p_ret->p_table = malloc(sizeof(heap_node_t*) * initial_capacity);
-    
+
     if (!p_ret->p_table) 
     {
         unordered_map_t_free(p_map);
         free(p_ret);
         return NULL;
     }
-    
+
     p_ret->p_indices = malloc(sizeof(size_t) * degree);
-    
+
     if (!p_ret->p_indices) 
     {
         unordered_map_t_free(p_map);
@@ -96,7 +96,7 @@ heap_t* heap_t_alloc(size_t degree,
         free(p_ret);
         return NULL;
     }
-    
+
     p_ret->p_node_map             = p_map;
     p_ret->capacity               = initial_capacity;
     p_ret->size                   = 0;
@@ -104,7 +104,7 @@ heap_t* heap_t_alloc(size_t degree,
     p_ret->p_hash_function        = p_hash_function;
     p_ret->p_equals_function      = p_equals_function;
     p_ret->p_key_compare_function = p_priority_compare_function;
-    
+
     return p_ret;
 }
 
@@ -121,16 +121,16 @@ static void sift_up(heap_t* p_heap, size_t index)
     size_t parent_index;
     heap_node_t* p_target_node;
     heap_node_t* p_parent_node;
-    
+
     if (index == 0) return;
-    
+
     parent_index = get_parent_index(p_heap, index);
     p_target_node = p_heap->p_table[index];
-    
+
     for (;;) 
     {
         p_parent_node = p_heap->p_table[parent_index];
-        
+
         if (p_heap->p_key_compare_function(p_parent_node->p_priority,
                                            p_target_node->p_priority) > 0)
         {
@@ -143,10 +143,10 @@ static void sift_up(heap_t* p_heap, size_t index)
         {
             break;
         }
-        
+
         if (index == 0) break;
     }
-    
+
     p_heap->p_table[index] = p_target_node;
     p_target_node->index = index;
 }
@@ -158,11 +158,11 @@ static void compute_children_indices(heap_t* p_heap, size_t index)
 {
     size_t degree = p_heap->degree;
     size_t i;
-    
+
     for (i = 0; i < degree; ++i)
     {
         p_heap->p_indices[i] = degree * index + i + 1;
-        
+
         if (p_heap->p_indices[i] >= p_heap->size)
         {
             p_heap->p_indices[i] = (size_t) -1;
@@ -176,19 +176,19 @@ bool heap_t_is_healthy(heap_t* p_heap)
     size_t i;
     size_t j;
     size_t child_index;
-    
+
     if (!p_heap) return false;
-    
+
     for (i = 0; i < p_heap->size; ++i) 
     {
         /* Check that all the children of the current node has priorities no
            less than the node itself. */
         compute_children_indices(p_heap, i);
-        
+
         for (j = 0; j < p_heap->degree; ++j) 
         {
             child_index = p_heap->p_indices[j];
-            
+
             if (child_index != (size_t) -1)
             {
                 if (p_heap->
@@ -206,7 +206,7 @@ bool heap_t_is_healthy(heap_t* p_heap)
             }
         }
     }
-    
+
     return true;
 }
 
@@ -224,23 +224,23 @@ static void sift_down_root(heap_t* p_heap)
     size_t i;
     size_t degree = p_heap->degree;
     size_t index = 0;
-    
+
     for (;;) 
     {
         p_min_child_priority = p_priority;
         min_child_index = -1; /* Very large value to denote "no children". */
         compute_children_indices(p_heap, index);
-        
+
         for (i = 0; i < degree; ++i) 
         {
             if (p_heap->p_indices[i] == (size_t) -1)
             {
                 break;
             }
-            
+
             p_tentative_priority = p_heap->p_table[p_heap->p_indices[i]]
                                          ->p_priority;
-            
+
             if (p_heap->p_key_compare_function(p_min_child_priority,
                                                p_tentative_priority) > 0)
             {
@@ -248,17 +248,17 @@ static void sift_down_root(heap_t* p_heap)
                 min_child_index = p_heap->p_indices[i];
             }
         }
-        
+
         if (min_child_index == (size_t) -1)
         {
             p_heap->p_table[index] = p_target;
             p_target->index = index;
             return;
         }
-        
+
         p_heap->p_table[index] = p_heap->p_table[min_child_index];
         p_heap->p_table[index]->index = index;
-        
+
         index = min_child_index;
     }
 }
@@ -273,17 +273,17 @@ static bool ensure_capacity_before_add(heap_t* p_heap)
     size_t        i;
     if (p_heap->size < p_heap->capacity) 
         return true;
-    
+
     new_capacity = 3 * p_heap->capacity / 2;
     p_new_table  = malloc(sizeof(heap_node_t*) * new_capacity);
-    
+
     if (!p_new_table) return false;
-    
+
     for (i = 0; i < p_heap->size; ++i)
     {
         p_new_table[i] = p_heap->p_table[i];
     }
-    
+
     free(p_heap->p_table);
     p_heap->p_table  = p_new_table;
     p_heap->capacity = new_capacity;
@@ -293,20 +293,20 @@ static bool ensure_capacity_before_add(heap_t* p_heap)
 bool heap_t_add(heap_t* p_heap, void* p_element, void* p_priority)
 {
     heap_node_t* p_node;
-    
+
     if (!p_heap) return false;
-    
+
     /* Already in the heap? */
     if (unordered_map_t_contains_key(p_heap->p_node_map, p_element)) 
         return false; 
-    
+
     p_node = heap_node_t_alloc(p_element, p_priority);
-    
+
     if (!p_node) return false;
-    
+
     if (!ensure_capacity_before_add(p_heap)) 
         return false;
-    
+
     p_node->index = p_heap->size;
     p_heap->p_table[p_heap->size] = p_node;
     unordered_map_t_put(p_heap->p_node_map, p_element, p_node);
@@ -318,13 +318,13 @@ bool heap_t_add(heap_t* p_heap, void* p_element, void* p_priority)
 bool heap_t_decrease_key(heap_t* p_heap, void* p_element, void* p_priority)
 {
     heap_node_t* p_node;
-    
+
     if (!p_heap) return false;
-    
-    if (!unordered_map_t_contains_key(p_heap->p_node_map, p_element)) 
+
+    if (!(p_node = unordered_map_t_get(p_heap->p_node_map, p_element)))
+    {
         return false;
-    
-    p_node = unordered_map_t_get(p_heap->p_node_map, p_element);
+    }
     
     if (p_heap->p_key_compare_function(p_priority, p_node->p_priority) < 0)
     {
@@ -332,14 +332,14 @@ bool heap_t_decrease_key(heap_t* p_heap, void* p_element, void* p_priority)
         sift_up(p_heap, p_node->index);
         return true;
     }
-    
+
     return false;
 }
 
 bool heap_t_contains_key(heap_t* p_heap, void* p_element)
 {
     if (!p_heap) return false;
-    
+
     return unordered_map_t_contains_key(p_heap->p_node_map, p_element);
 }
 
@@ -347,10 +347,10 @@ void* heap_t_extract_min(heap_t* p_heap)
 {
     void* p_ret;
     heap_node_t* p_node;
-    
+
     if (!p_heap)           return NULL;
     if (p_heap->size == 0) return NULL;
-    
+
     p_node = p_heap->p_table[0];
     p_ret = p_node->p_element;
     p_heap->size--;
@@ -376,11 +376,11 @@ int heap_t_size(heap_t* p_heap)
 void heap_t_clear(heap_t* p_heap)
 {
     size_t i;
-    
+
     if (!p_heap) return;
-    
+
     unordered_map_t_clear(p_heap->p_node_map);
-    
+
     for (i = 0; i < p_heap->size; ++i)
     {
         free(p_heap->p_table[i]);
@@ -390,7 +390,7 @@ void heap_t_clear(heap_t* p_heap)
 void heap_t_free(heap_t* p_heap) 
 {
     if (!p_heap) return;
-    
+
     heap_t_clear(p_heap);
     unordered_map_t_free(p_heap->p_node_map);
     free(p_heap->p_indices);

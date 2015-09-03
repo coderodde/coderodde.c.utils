@@ -830,14 +830,14 @@ static void test_heap_performance()
 }
 
 int main(int argc, char** argv) {
-//    test_unordered_map_correctness();
-//    test_unordered_map_performance();
-//    test_unordered_set_correctness();
-//    test_unordered_set_performance();
-//    test_map_correctness();
-//    test_map_performance();
-//    test_set_correctness();
-//    test_set_performance();
+    test_unordered_map_correctness();
+    test_unordered_map_performance();
+    test_unordered_set_correctness();
+    test_unordered_set_performance();
+    test_map_correctness();
+    test_map_performance();
+    test_set_correctness();
+    test_set_performance();
     test_heap_correctness();
     test_heap_performance();
     return (EXIT_SUCCESS);

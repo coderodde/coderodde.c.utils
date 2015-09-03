@@ -19,6 +19,7 @@ typedef struct unordered_map_t {
     size_t                  mod_count;
     size_t                  table_capacity;
     size_t                  size;
+    size_t                  max_allowed_size;
     size_t                  mask;
     float                   load_factor;
 } unordered_map_t;
@@ -110,6 +111,7 @@ unordered_map_t* unordered_map_t_alloc(size_t initial_capacity,
     p_ret->p_hash_function   = p_hash_function;
     p_ret->p_equals_function = p_equals_function;
     p_ret->mask              = initial_capacity - 1;
+    p_ret->max_allowed_size  = (size_t)(initial_capacity * load_factor);
 
     return p_ret;
 }
@@ -122,12 +124,12 @@ static void ensure_capacity(unordered_map_t* p_map)
     unordered_map_entry_t* p_entry;
     unordered_map_entry_t** p_new_table;
 
-    if (p_map->size <= p_map->load_factor * p_map->table_capacity) return;
-
+    if (p_map->size < p_map->max_allowed_size) return;
+    
     new_capacity = 2 * p_map->table_capacity;
-    new_mask = new_capacity - 1;
-    p_new_table = calloc(new_capacity, sizeof(unordered_map_entry_t*));
-
+    new_mask     = new_capacity - 1;
+    p_new_table  = calloc(new_capacity, sizeof(unordered_map_entry_t*));
+    
     if (!p_new_table) return;
 
     /* Rehash the entries. */
@@ -139,20 +141,24 @@ static void ensure_capacity(unordered_map_t* p_map)
     }
 
     free(p_map->p_table);
-    p_map->p_table        = p_new_table;
-    p_map->table_capacity = new_capacity;
-    p_map->mask           = new_mask;
+    
+    p_map->p_table          = p_new_table;
+    p_map->table_capacity   = new_capacity;
+    p_map->mask             = new_mask;
+    p_map->max_allowed_size = (size_t)(new_capacity * p_map->load_factor);
 }
 
 void* unordered_map_t_put(unordered_map_t* p_map, void* p_key, void* p_value)
 {
     size_t index;
+    size_t hash_value;
     void* p_old_value;
     unordered_map_entry_t* p_entry;
 
     if (!p_map) return NULL;
 
-    index = p_map->p_hash_function(p_key) & p_map->mask;
+    hash_value = p_map->p_hash_function(p_key);
+    index = hash_value & p_map->mask;
 
     for (p_entry = p_map->p_table[index]; 
          p_entry;
@@ -169,7 +175,7 @@ void* unordered_map_t_put(unordered_map_t* p_map, void* p_key, void* p_value)
     ensure_capacity(p_map);
 
     /* Recompute the index since it is possibly changed by 'ensure_capacity' */
-    index = p_map->p_hash_function(p_key) & p_map->mask;
+    index                 = hash_value & p_map->mask;
     p_entry               = unordered_map_entry_t_alloc(p_key, p_value);
     p_entry->p_chain_next = p_map->p_table[index];
     p_map->p_table[index] = p_entry;
@@ -257,35 +263,26 @@ void* unordered_map_t_remove(unordered_map_t* p_map, void* p_key)
             }
             else
             {
-                // Here?
                 p_map->p_table[index] = p_current_entry->p_chain_next;
             }
 
             /* Unlink from the global iteration chain. */
-            if (p_current_entry->p_prev && p_current_entry->p_next) 
+            if (p_current_entry->p_prev)
             {
-                /* Once here, the current entry has both next and previous. */
                 p_current_entry->p_prev->p_next = p_current_entry->p_next;
-                p_current_entry->p_next->p_prev = p_current_entry->p_prev;
-            }
-            else if (!p_current_entry->p_prev && !p_current_entry->p_next)
-            {
-                /* Once here, the current entry 
-                   is the only entry in the chain. */
-                p_map->p_head = NULL;
-                p_map->p_tail = NULL;
-            }
-            else if (p_current_entry->p_next)
-            {
-                /* Once here, the current entry is the head of the chain. */
-                p_map->p_head = p_current_entry->p_next;
-                p_map->p_head->p_prev = NULL;
             }
             else
             {
-                /* Once here, the current entry is the tail of the chain. */
+                p_map->p_head = p_current_entry->p_next;
+            }
+            
+            if (p_current_entry->p_next)
+            {
+                p_current_entry->p_next->p_prev = p_current_entry->p_prev;
+            }
+            else
+            {
                 p_map->p_tail = p_current_entry->p_prev;
-                p_map->p_tail->p_next = NULL;
             }
 
             p_ret = p_current_entry->p_value;
@@ -317,11 +314,7 @@ void unordered_map_t_clear(unordered_map_t* p_map)
         p_next_entry = p_entry->p_next;
         free(p_entry);
         p_entry = p_next_entry;
-
-        if (p_map->p_table[index])
-        {
-            p_map->p_table[index] = p_map->p_table[index]->p_chain_next;
-        }
+        p_map->p_table[index] = NULL;
     }
 
     p_map->mod_count += p_map->size;
@@ -330,9 +323,9 @@ void unordered_map_t_clear(unordered_map_t* p_map)
     p_map->p_tail = NULL;
 }
 
-int unordered_map_t_size(unordered_map_t* p_map)
+size_t unordered_map_t_size(unordered_map_t* p_map)
 {
-    return p_map ? p_map->size : -1;
+    return p_map ? p_map->size : 0;
 }
 
 bool unordered_map_t_is_healthy(unordered_map_t* p_map)
@@ -383,7 +376,7 @@ unordered_map_iterator_t_alloc(unordered_map_t* p_map)
     return p_ret;
 }
 
-int unordered_map_iterator_t_has_next(unordered_map_iterator_t* p_iterator)
+size_t unordered_map_iterator_t_has_next(unordered_map_iterator_t* p_iterator)
 {
     if (!p_iterator) return 0;
 
