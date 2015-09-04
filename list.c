@@ -235,8 +235,8 @@ void* list_t_remove_at(list_t* p_list, size_t index)
         /* Move the following elements one position to the left. */
         for (i = 0; i < elements_after; ++i) 
         {
-            p_list->p_table[(head + index) & mask] =
-            p_list->p_table[(head + index + 1) & mask];
+            p_list->p_table[(head + index + i) & mask] =
+            p_list->p_table[(head + index + i + 1) & mask];
         }
     }
     

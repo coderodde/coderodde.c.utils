@@ -830,6 +830,11 @@ static void test_heap_performance()
     }
 }
 
+static bool int_eq(void* a, void* b)
+{
+    return a == b;
+}
+
 static void test_list_correctness()
 {
     size_t i;
@@ -887,11 +892,6 @@ static void test_list_correctness()
     ASSERT(list_t_insert(p_list, 3, 14));
     /* <10, 2, 12, 14, 0, 1, 11> */
     
-    for (i = 0; i < list_t_size(p_list); ++i)
-    {
-        printf("%d\n", list_t_get(p_list, i));
-    }
-    
     ASSERT(list_t_get(p_list, 0) == 10);
     ASSERT(list_t_get(p_list, 1) == 2);
     ASSERT(list_t_get(p_list, 2) == 12);
@@ -899,6 +899,54 @@ static void test_list_correctness()
     ASSERT(list_t_get(p_list, 4) == 0);
     ASSERT(list_t_get(p_list, 5) == 1);
     ASSERT(list_t_get(p_list, 6) == 11);
+    
+    ASSERT(list_t_set(p_list, 5, 100) == 1);
+    ASSERT(list_t_get(p_list, 5) == 100);
+    
+    ASSERT(list_t_size(p_list) == 7);
+    
+    ASSERT(list_t_contains(p_list,  10,  int_eq));
+    ASSERT(list_t_contains(p_list,  2,   int_eq));
+    ASSERT(list_t_contains(p_list,  12,  int_eq));
+    ASSERT(list_t_contains(p_list,  14,  int_eq));
+    ASSERT(list_t_contains(p_list,  0,   int_eq));
+    ASSERT(list_t_contains(p_list,  100, int_eq));
+    ASSERT(list_t_contains(p_list,  11,  int_eq));
+    ASSERT(!list_t_contains(p_list, 15,  int_eq));
+    ASSERT(!list_t_contains(p_list, 16,  int_eq));
+    
+    ASSERT(list_t_size(p_list) == 7);
+    
+    /* <10, 2, 12, 14, 0, 100, 11*/
+    ASSERT(list_t_remove_at(p_list, 4) == 0);
+    /* <10, 2, 12, 14, 100, 11> */
+    ASSERT(list_t_remove_at(p_list, 4) == 100);
+    /* <10, 2, 12, 14, 11> */
+    ASSERT(list_t_remove_at(p_list, 4) == 11);
+    /* <10, 2, 12, 14> */
+    ASSERT(list_t_remove_at(p_list, 0) == 10);
+    /* <2, 12, 14> */
+    ASSERT(list_t_remove_at(p_list, 4) == NULL);
+    ASSERT(list_t_remove_at(p_list, 3) == NULL);
+    /* <2, 12, 14> */
+    ASSERT(list_t_remove_at(p_list, 1) == 12);
+    /* <2, 14> */
+    ASSERT(list_t_remove_at(p_list, 1) == 14);
+    /* <2> */
+    ASSERT(list_t_remove_at(p_list, 0) == 2);
+    
+    ASSERT(list_t_size(p_list) == 0);
+    
+    for (i = 0; i < 5; ++i) 
+    {
+        ASSERT(list_t_push_front(p_list, 2 * i + 1));
+    }
+    
+    ASSERT(list_t_remove_at(p_list, 2) == 5);
+    ASSERT(list_t_pop_front(p_list) == 9);
+    ASSERT(list_t_pop_back(p_list) == 1);
+    ASSERT(list_t_pop_front(p_list) == 7);
+    ASSERT(list_t_pop_back(p_list) == 3);
 }
 
 int main(int argc, char** argv) {
