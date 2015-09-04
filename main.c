@@ -840,5 +840,7 @@ int main(int argc, char** argv) {
     test_set_performance();
     test_heap_correctness();
     test_heap_performance();
+    size_t s = 0;
+    printf("%x\n", s - 1);
     return (EXIT_SUCCESS);
 }

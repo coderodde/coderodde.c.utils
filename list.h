@@ -1,6 +1,9 @@
 #ifndef LIST_H
 #define	LIST_H
 
+#include <stdbool.h>
+#include <stdlib.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
