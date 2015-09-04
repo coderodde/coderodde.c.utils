@@ -148,11 +148,13 @@ static void ensure_capacity(unordered_set_t* p_set)
 bool unordered_set_t_add(unordered_set_t* p_set, void* p_key)
 {
     size_t index;
+    size_t hash_value;
     unordered_set_entry_t* p_entry;
-
+    
     if (!p_set) return NULL;
 
-    index = p_set->p_hash_function(p_key) & p_set->mask;
+    hash_value = p_set->p_hash_function(p_key);
+    index      = hash_value & p_set->mask;
 
     for (p_entry = p_set->p_table[index]; 
          p_entry;
@@ -167,7 +169,7 @@ bool unordered_set_t_add(unordered_set_t* p_set, void* p_key)
     ensure_capacity(p_set);
 
     /* Recompute the index since it is possibly changed by 'ensure_capacity' */
-    index = p_set->p_hash_function(p_key) & p_set->mask;
+    index                 = hash_value & p_set->mask;
     p_entry               = unordered_set_entry_t_alloc(p_key);
     p_entry->p_chain_next = p_set->p_table[index];
     p_set->p_table[index] = p_entry;
@@ -240,32 +242,24 @@ bool unordered_set_t_remove(unordered_set_t* p_set, void* p_key)
             }
 
             /* Unlink from the global iteration chain. */
-            if (p_current_entry->p_prev && p_current_entry->p_next) 
+            if (p_current_entry->p_prev)
             {
-                /* Once here, the current entry has both next and previous. */
                 p_current_entry->p_prev->p_next = p_current_entry->p_next;
-                p_current_entry->p_next->p_prev = p_current_entry->p_prev;
-            }
-            else if (!p_current_entry->p_prev && !p_current_entry->p_next)
+            } 
+            else
             {
-                /* Once here, the current entry 
-                   is the only entry in the chain. */
-                p_set->p_head = NULL;
-                p_set->p_tail = NULL;
-            }
-            else if (p_current_entry->p_next)
-            {
-                /* Once here, the current entry is the head of the chain. */
                 p_set->p_head = p_current_entry->p_next;
-                p_set->p_head->p_prev = NULL;
+            }
+            
+            if (p_current_entry->p_prev)
+            {
+                p_current_entry->p_prev->p_next = p_current_entry->p_prev;
             }
             else
             {
-                /* Once here, the current entry is the tail of the chain. */
                 p_set->p_tail = p_current_entry->p_prev;
-                p_set->p_tail->p_next = NULL;
             }
-
+            
             p_set->size--;
             p_set->mod_count++;
             free(p_current_entry);
@@ -278,33 +272,29 @@ bool unordered_set_t_remove(unordered_set_t* p_set, void* p_key)
     return false;
 }
 
-void unordered_set_t_clear(unordered_set_t* p_map)
+void unordered_set_t_clear(unordered_set_t* p_set)
 {
     unordered_set_entry_t* p_entry;
     unordered_set_entry_t* p_next_entry;
     size_t index;
 
-    if (!p_map) return;
+    if (!p_set) return;
 
-    p_entry = p_map->p_head;
+    p_entry = p_set->p_head;
 
     while (p_entry)
     {
-        index = p_map->p_hash_function(p_entry->p_key) & p_map->mask;
+        index = p_set->p_hash_function(p_entry->p_key) & p_set->mask;
         p_next_entry = p_entry->p_next;
         free(p_entry);
         p_entry = p_next_entry;
-
-        if (p_map->p_table[index])
-        {
-            p_map->p_table[index] = p_map->p_table[index]->p_chain_next;
-        }
+        p_set->p_table[index] = NULL;
     }
 
-    p_map->mod_count += p_map->size;
-    p_map->size = 0;
-    p_map->p_head = NULL;
-    p_map->p_tail = NULL;
+    p_set->mod_count += p_set->size;
+    p_set->size = 0;
+    p_set->p_head = NULL;
+    p_set->p_tail = NULL;
 }
 
 size_t unordered_set_t_size(unordered_set_t* p_set)
@@ -312,15 +302,15 @@ size_t unordered_set_t_size(unordered_set_t* p_set)
     return p_set ? p_set->size : 0;
 }
 
-bool unordered_set_t_is_healthy(unordered_set_t* p_map)
+bool unordered_set_t_is_healthy(unordered_set_t* p_set)
 {
     size_t counter;
     unordered_set_entry_t* p_entry;
 
-    if (!p_map) return false;
+    if (!p_set) return false;
 
     counter = 0;
-    p_entry = p_map->p_head;
+    p_entry = p_set->p_head;
 
     if (p_entry && p_entry->p_prev) return false;
 
@@ -329,7 +319,7 @@ bool unordered_set_t_is_healthy(unordered_set_t* p_map)
         counter++;
     }
 
-    return counter == p_map->size;
+    return counter == p_set->size;
 }
 
 void unordered_set_t_free(unordered_set_t* p_map)

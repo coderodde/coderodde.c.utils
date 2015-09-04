@@ -46,13 +46,13 @@ static void test_map_performance()
     
     int* array = malloc(sizeof(int) * sz);
  
-    puts("--- PERFORMANCE OF MAP ---");
+    puts("--- PERFORMANCE OF map_t ---");
     
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
     int time_ = time(NULL);
-    printf("Time: %d.\n", time_);
+    printf("Seed: %d.\n", time_);
     srand(time_);
     
     for (i = 0; i < sz; ++i)
@@ -172,13 +172,13 @@ static void test_unordered_map_performance()
     
     int* array = malloc(sizeof(int) * sz);
  
-    puts("--- PERFORMANCE OF UNORDERED_MAP ---");
+    puts("--- PERFORMANCE OF unordered_map_t ---");
     
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
     int time_ = 1441177757;time(NULL);
-    printf("Time: %d.\n", time_);
+    printf("Seed: %d.\n", time_);
     srand(time_);
     
     for (i = 0; i < sz; ++i)
@@ -296,13 +296,13 @@ static void test_set_performance()
     
     int* array = malloc(sizeof(int) * sz);
  
-    puts("--- PERFORMANCE OF SET ---");
+    puts("--- PERFORMANCE OF set_t ---");
     
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
     int time_ = time(NULL);
-    printf("Time: %d.\n", time_);
+    printf("Seed: %d.\n", time_);
     srand(time_);
     
     for (i = 0; i < sz; ++i)
@@ -621,13 +621,13 @@ static void test_unordered_set_performance()
     int* array = malloc(sizeof(int) * sz);
     p_check_list = calloc(sz, sizeof(bool));
     
-    puts("--- PERFORMANCE OF UNORDERED_SET ---");
+    puts("--- PERFORMANCE OF unordered_set_t ---");
     
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
     int time_ = time(NULL);
-    printf("Time: %d.\n", time_);
+    printf("Seed: %d.\n", time_);
     srand(time_);
     
     for (i = 0; i < sz; ++i)
@@ -787,7 +787,7 @@ static void test_heap_performance()
     const size_t sz = 1000000;
     double duration;
     
-    puts("--- PERFORMANCE OF HEAP ---");
+    puts("--- PERFORMANCE OF heap_t ---");
     
     for (degree = 2; degree <= 10; ++degree)
     {
