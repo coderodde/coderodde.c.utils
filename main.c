@@ -6,6 +6,7 @@
 #include "unordered_map.h"
 #include "unordered_set.h"
 #include "heap.h"
+#include "list.h"
 
 #define ASSERT(CONDITION) assert(CONDITION, #CONDITION, __FILE__, __LINE__)
 
@@ -829,18 +830,89 @@ static void test_heap_performance()
     }
 }
 
+static void test_list_correctness()
+{
+    size_t i;
+    list_t* p_list = list_t_alloc(10);
+    
+    for (i = 0; i < 40; i++) 
+    {
+        ASSERT(list_t_push_back(p_list, 2 * i));
+    }
+    
+    ASSERT(list_t_size(p_list) == 40);
+    
+    for (i = 0; i < 40; ++i) 
+    {
+        ASSERT(list_t_get(p_list, i) == 2 * i);
+    }
+    
+    for (i = 0; i < 40; ++i) 
+    {
+        ASSERT(list_t_size(p_list) > 0);
+        ASSERT(list_t_pop_front(p_list) == 2 * i);
+    }
+    
+    ASSERT(list_t_size(p_list) == 0);
+    
+    for (i = 200; i > 0; --i) 
+    {
+        ASSERT(list_t_push_front(p_list, i));
+    }
+    
+    ASSERT(list_t_size(p_list) == 200);
+    
+    for (i = 200; i > 0; --i) 
+    {
+        ASSERT(list_t_pop_back(p_list) == i);
+    }
+    
+    ASSERT(list_t_size(p_list) == 0);
+    
+    ASSERT(list_t_insert(p_list, 0, 0));
+    ASSERT(list_t_insert(p_list, 1, 1));
+    ASSERT(list_t_insert(p_list, 0, 2));
+    
+    ASSERT(list_t_get(p_list, 0) == 2);
+    ASSERT(list_t_get(p_list, 1) == 0);
+    ASSERT(list_t_get(p_list, 2) == 1);
+    
+    /* <2, 0, 1> */
+    ASSERT(list_t_insert(p_list, 0, 10));
+    /* <10, 2, 0, 1> */
+    ASSERT(list_t_insert(p_list, 4, 11));
+    /* <10, 2, 0, 1, 11> */
+    ASSERT(list_t_insert(p_list, 2, 12));
+    /* <10, 2, 12, 0, 1, 11> */
+    ASSERT(list_t_insert(p_list, 3, 14));
+    /* <10, 2, 12, 14, 0, 1, 11> */
+    
+    for (i = 0; i < list_t_size(p_list); ++i)
+    {
+        printf("%d\n", list_t_get(p_list, i));
+    }
+    
+    ASSERT(list_t_get(p_list, 0) == 10);
+    ASSERT(list_t_get(p_list, 1) == 2);
+    ASSERT(list_t_get(p_list, 2) == 12);
+    ASSERT(list_t_get(p_list, 3) == 14);
+    ASSERT(list_t_get(p_list, 4) == 0);
+    ASSERT(list_t_get(p_list, 5) == 1);
+    ASSERT(list_t_get(p_list, 6) == 11);
+}
+
 int main(int argc, char** argv) {
-    test_unordered_map_correctness();
-    test_unordered_map_performance();
-    test_unordered_set_correctness();
-    test_unordered_set_performance();
-    test_map_correctness();
-    test_map_performance();
-    test_set_correctness();
-    test_set_performance();
-    test_heap_correctness();
-    test_heap_performance();
-    size_t s = 0;
-    printf("%x\n", s - 1);
+    test_list_correctness();
+    
+//    test_unordered_map_correctness();
+//    test_unordered_map_performance();
+//    test_unordered_set_correctness();
+//    test_unordered_set_performance();
+//    test_map_correctness();
+//    test_map_performance();
+//    test_set_correctness();
+//    test_set_performance();
+//    test_heap_correctness();
+//    test_heap_performance();
     return (EXIT_SUCCESS);
 }

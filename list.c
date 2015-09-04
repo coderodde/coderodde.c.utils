@@ -107,6 +107,7 @@ bool list_t_insert(list_t* p_list, size_t index, void* p_element)
     size_t i;
     size_t head;
     size_t mask;
+    size_t size;
     
     if (!p_list)                             return false;
     if (!ensure_capacity_before_add(p_list)) return false;
@@ -116,6 +117,7 @@ bool list_t_insert(list_t* p_list, size_t index, void* p_element)
     elements_after  = p_list->size - index;
     head            = p_list->head;
     mask            = p_list->mask;
+    size            = p_list->size;
     
     if (elements_before < elements_after) 
     {
@@ -125,22 +127,30 @@ bool list_t_insert(list_t* p_list, size_t index, void* p_element)
             p_list->p_table[(head + i - 1) & mask] =
             p_list->p_table[(head + i) & mask];
         }
-        
-        p_list->head = (head - 1) & mask;
+    
+        head = (head - 1) & mask;
+        p_list->p_table[(head + index) & mask] = p_element;
+        p_list->head = head;
     }
     else
     {
         /* Move the following elements one position to the right. */
         for (i = 0; i < elements_after; ++i)
         {
-            p_list->p_table[(head + elements_after - i) & mask] =
-            p_list->p_table[(head + elements_after - i - 1) & mask];
+            p_list->p_table[(head + size - i) & mask] =
+            p_list->p_table[(head + size - i - 1) & mask];
         }
+        
+        p_list->p_table[(head + index) & mask] = p_element;
     }
 
-    p_list->p_table[(head + index) & mask] = p_element;
     p_list->size++;
     return true;
+}
+
+size_t list_t_size(list_t* p_list) 
+{
+    return p_list ? p_list->size : 0;
 }
 
 void* list_t_get(list_t* p_list, size_t index)
@@ -183,7 +193,7 @@ void* list_t_pop_back(list_t* p_list)
     if (!p_list)           return NULL;
     if (p_list->size == 0) return NULL;
     
-    p_ret = p_list->p_table[(p_list->head + p_list->size) & p_list->mask];
+    p_ret = p_list->p_table[(p_list->head + p_list->size - 1) & p_list->mask];
     p_list->size--;
     return p_ret;
 }

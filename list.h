@@ -34,6 +34,11 @@ extern "C" {
     bool    list_t_insert(list_t* p_list, size_t index, void* p_element);
     
     /***************************************************************************
+    * Returns the amount of elements stored in the list.                       * 
+    ***************************************************************************/  
+    size_t  list_t_size(list_t* p_list);
+    
+    /***************************************************************************
     * Returns the index'th element of the list. Returns NULL if the index is   *
     * out of range.                                                            * 
     ***************************************************************************/  
