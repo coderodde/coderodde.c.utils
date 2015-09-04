@@ -52,9 +52,9 @@ static void test_map_performance()
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
-    int time_ = time(NULL);
-    printf("Seed: %d.\n", time_);
-    srand(time_);
+    int seed = time(NULL);
+    printf("Seed: %d.\n", seed);
+    srand(seed);
     
     for (i = 0; i < sz; ++i)
     {
@@ -178,9 +178,9 @@ static void test_unordered_map_performance()
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
-    int time_ = 1441177757;time(NULL);
-    printf("Seed: %d.\n", time_);
-    srand(time_);
+    int seed = 1441177757;time(NULL);
+    printf("Seed: %d.\n", seed);
+    srand(seed);
     
     for (i = 0; i < sz; ++i)
     {
@@ -302,9 +302,9 @@ static void test_set_performance()
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
-    int time_ = time(NULL);
-    printf("Seed: %d.\n", time_);
-    srand(time_);
+    int seed = time(NULL);
+    printf("Seed: %d.\n", seed);
+    srand(seed);
     
     for (i = 0; i < sz; ++i)
     {
@@ -627,9 +627,9 @@ static void test_unordered_set_performance()
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
-    int time_ = time(NULL);
-    printf("Seed: %d.\n", time_);
-    srand(time_);
+    int seed = time(NULL);
+    printf("Seed: %d.\n", seed);
+    srand(seed);
     
     for (i = 0; i < sz; ++i)
     {
@@ -949,18 +949,73 @@ static void test_list_correctness()
     ASSERT(list_t_pop_back(p_list) == 3);
 }
 
+static void test_list_performance()
+{
+    list_t* p_list = list_t_alloc(10);
+    const int sz = 1000000;
+    
+    clock_t t;
+    double duration = 0.0;
+    int i;
+    int j;
+    int a;
+    int b;
+    int tmp;
+    void* p_element;
+    
+    puts("--- PERFORMANCE OF list_t ---");
+    
+    int time_ = time(NULL);
+    printf("Seed: %d.\n", time_);
+    srand(time_);
+    
+    t = clock();
+    
+    for (i = 0; i < sz / 2; ++i) 
+    {
+        ASSERT(list_t_push_front(p_list, sz / 2 - i - 1));
+    }
+    
+    for (i = sz / 2; i < sz; ++i) 
+    {
+        ASSERT(list_t_push_back(p_list, i));
+    }
+    
+    duration += ((double) clock() - t);
+    
+    t = clock();
+
+    for (i = 0; i < sz; ++i) 
+    {
+        ASSERT(list_t_get(p_list, i) == i);
+    }
+    
+    duration += ((double) clock() - t);
+    
+    t = clock();
+    
+    for (i = 0; i < sz; ++i)
+    {
+        ASSERT(list_t_pop_front(p_list) == i);
+    }
+    
+    duration += ((double) clock() - t);
+    
+    printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);        
+}
+
 int main(int argc, char** argv) {
     test_list_correctness();
-    
-//    test_unordered_map_correctness();
-//    test_unordered_map_performance();
-//    test_unordered_set_correctness();
-//    test_unordered_set_performance();
-//    test_map_correctness();
-//    test_map_performance();
-//    test_set_correctness();
-//    test_set_performance();
-//    test_heap_correctness();
-//    test_heap_performance();
+    test_list_performance();
+    test_unordered_map_correctness();
+    test_unordered_map_performance();
+    test_unordered_set_correctness();
+    test_unordered_set_performance();
+    test_map_correctness();
+    test_map_performance();
+    test_set_correctness();
+    test_set_performance();
+    test_heap_correctness();
+    test_heap_performance();
     return (EXIT_SUCCESS);
 }
