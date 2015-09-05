@@ -196,7 +196,6 @@ bool heap_t_is_healthy(heap_t* p_heap)
                             p_heap->p_table[i]->p_priority, 
                             p_heap->p_table[child_index]->p_priority) > 0)
                 {
-                    printf("SHIT, %d > %d\n", p_heap->p_table[i]->p_priority, p_heap->p_table[child_index]->p_priority);
                     return false;
                 }
             }
@@ -300,12 +299,12 @@ bool heap_t_add(heap_t* p_heap, void* p_element, void* p_priority)
     if (unordered_map_t_contains_key(p_heap->p_node_map, p_element)) 
         return false; 
 
+    if (!ensure_capacity_before_add(p_heap)) 
+        return false;
+
     p_node = heap_node_t_alloc(p_element, p_priority);
 
     if (!p_node) return false;
-
-    if (!ensure_capacity_before_add(p_heap)) 
-        return false;
 
     p_node->index = p_heap->size;
     p_heap->p_table[p_heap->size] = p_node;
