@@ -947,6 +947,13 @@ static void test_list_correctness()
     ASSERT(list_t_pop_back(p_list) == 1);
     ASSERT(list_t_pop_front(p_list) == 7);
     ASSERT(list_t_pop_back(p_list) == 3);
+    
+    list_t_insert(p_list, 0, 1);
+    list_t_insert(p_list, 0, 2);
+    
+    ASSERT(list_t_size(p_list) == 2);
+    list_t_clear(p_list);
+    ASSERT(list_t_size(p_list) == 0);
 }
 
 static void test_list_performance()
