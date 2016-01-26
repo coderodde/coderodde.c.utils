@@ -1017,7 +1017,11 @@ static void test_fibonacci_heap_correctness()
 {
     fibonacci_heap_t* p_heap;
     size_t i;
-    p_heap = fibonacci_heap_t_alloc(10, 1.0f, hash_function, equals_function, priority_cmp);
+    p_heap = fibonacci_heap_t_alloc(10, 
+                                    1.0f, 
+                                    hash_function, 
+                                    equals_function, 
+                                    priority_cmp);
     
     ASSERT(fibonacci_heap_t_is_healthy(p_heap));
     
@@ -1079,6 +1083,51 @@ static void test_fibonacci_heap_correctness()
     ASSERT(fibonacci_heap_t_extract_min(p_heap) == NULL);
 }
 
+static void test_fibonacci_heap_performance()
+{
+    fibonacci_heap_t* p_heap;
+    size_t i;
+    clock_t t;
+    const size_t sz = 1000000;
+    double duration;
+    
+    puts("--- PERFORMANCE OF fibonacci_heap_t ---");
+    
+    duration = 0.0;
+    p_heap = fibonacci_heap_t_alloc(10,
+                                    1.0f,
+                                    hash_function,
+                                    equals_function,
+                                    priority_cmp);
+    t = clock();
+
+    for (i = 0; i < sz; ++i) 
+    {
+        fibonacci_heap_t_add(p_heap, i, 500000 + sz - i);
+    }
+
+    /* State: 999999, 999998, 999997, ... */
+    ASSERT(fibonacci_heap_t_is_healthy(p_heap));
+
+    for (i = sz / 2; i < sz; ++i)
+    {
+        fibonacci_heap_t_decrease_key(p_heap, i, i);
+    }
+
+    ASSERT(fibonacci_heap_t_is_healthy(p_heap));
+
+    for (i = 0; i < sz; ++i)
+    {
+        fibonacci_heap_t_extract_min(p_heap);
+    }
+
+    duration += ((double) clock() - t);
+
+    fibonacci_heap_t_free(p_heap);
+
+    printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);
+}
+
 static void small_fibonacci_test()
 {
     fibonacci_heap_t* heap = 
@@ -1112,12 +1161,12 @@ int main(int argc, char** argv) {
     test_map_correctness();
     test_map_performance();
     test_set_correctness();
-    test_set_performance();
+    test_set_performance();*/
     test_heap_correctness();
-    test_heap_performance();*/
+    test_heap_performance();
     
     test_fibonacci_heap_correctness();
-/*    test_fibonacii_heap_performance(); */
+    test_fibonacci_heap_performance(); 
     /*small_fibonacci_test();*/
     return (EXIT_SUCCESS);
 }
