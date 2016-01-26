@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <math.h>
 
 static const double LOG_PHI = 0.4813;
@@ -31,14 +32,7 @@ typedef struct fibonacci_heap_t {
 
 static fibonacci_heap_node_t* fibonacci_heap_node_t_alloc(void* p_element, 
                                                           void* p_priority) {
-    fibonacci_heap_node_t* p_node;
-    
-    if (!p_element || !p_priority) 
-    {
-        return NULL;
-    }
-    
-    p_node = malloc(sizeof(fibonacci_heap_node_t));
+    fibonacci_heap_node_t* p_node = malloc(sizeof(fibonacci_heap_node_t));
     
     if (!p_node) 
     {
@@ -112,7 +106,11 @@ bool fibonacci_heap_t_add(fibonacci_heap_t* p_heap,
     
     if (!p_heap) return false;
     if (unordered_map_t_contains_key(p_heap->p_node_map, 
-                                     p_element)) return false;
+                                     p_element))
+    {
+        /*printf("Element fail: %d\n", p_element);*/
+        return false;
+    }
     
     p_node = fibonacci_heap_node_t_alloc(p_element, p_priority);
     
@@ -126,7 +124,7 @@ bool fibonacci_heap_t_add(fibonacci_heap_t* p_heap,
         p_node->p_right->p_left = p_node;
         
         if (p_heap->p_key_compare_function(p_priority, 
-                                           p_heap->p_minimum_node->p_priority)) 
+                                           p_heap->p_minimum_node->p_priority) < 0) 
         {
             p_heap->p_minimum_node = p_node;
         }
@@ -267,7 +265,10 @@ static void link(fibonacci_heap_node_t* y, fibonacci_heap_node_t* x)
 static void consolidate(fibonacci_heap_t* p_heap)
 {
     size_t array_size = 
-            (size_t)(floor(log(unordered_map_t_size(p_heap)) / LOG_PHI)) + 1;
+            (size_t)(floor
+                      (log
+                        (unordered_map_t_size(p_heap->p_node_map)) 
+                      / LOG_PHI)) + 1;
     size_t number_of_roots;
     size_t degree;
     size_t i;
@@ -409,7 +410,9 @@ void* fibonacci_heap_t_extract_min(fibonacci_heap_t* p_heap)
     {
         node_to_free = p_heap->p_minimum_node;
         p_heap->p_minimum_node = z->p_right;
+//        puts("Before consolidate");
         consolidate(p_heap);
+//        puts("After  consolidate");
     }
     
     unordered_map_t_remove(p_heap->p_node_map, p_ret);

@@ -13,8 +13,7 @@ extern "C" {
     /***************************************************************************
     * Allocates a new, empty heap with given degree.                           *
     ***************************************************************************/  
-    fibonacci_heap_t* heap_t_alloc(size_t degree,
-                                   size_t initial_capacity,
+    fibonacci_heap_t* fibonacci_heap_t_alloc(size_t initial_capacity,
                                    float load_factor,
                                    size_t (*p_hash_function)(void*),
                                    bool (*p_equals_function)(void*, void*),
