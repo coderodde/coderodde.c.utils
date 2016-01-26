@@ -4,6 +4,7 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <itemPath>fibonacci_heap.h</itemPath>
       <itemPath>heap.h</itemPath>
       <itemPath>list.h</itemPath>
       <itemPath>map.h</itemPath>
@@ -18,6 +19,7 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <itemPath>fibonacci_heap.c</itemPath>
       <itemPath>heap.c</itemPath>
       <itemPath>list.c</itemPath>
       <itemPath>main.c</itemPath>
@@ -48,9 +50,13 @@
       </toolsSet>
       <compileType>
         <cTool>
-          <commandLine>-O3</commandLine>
+          <commandLine>-O3 -ansi -pedantic -Wall</commandLine>
         </cTool>
       </compileType>
+      <item path="fibonacci_heap.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="fibonacci_heap.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="heap.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="heap.h" ex="false" tool="3" flavor2="0">
@@ -98,6 +104,10 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="fibonacci_heap.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="fibonacci_heap.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="heap.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="heap.h" ex="false" tool="3" flavor2="0">

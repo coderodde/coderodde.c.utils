@@ -35,6 +35,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
+	${OBJECTDIR}/fibonacci_heap.o \
 	${OBJECTDIR}/heap.o \
 	${OBJECTDIR}/list.o \
 	${OBJECTDIR}/main.o \
@@ -67,6 +68,11 @@ LDLIBSOPTIONS=
 ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/crtreemap: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/crtreemap ${OBJECTFILES} ${LDLIBSOPTIONS}
+
+${OBJECTDIR}/fibonacci_heap.o: fibonacci_heap.c 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/fibonacci_heap.o fibonacci_heap.c
 
 ${OBJECTDIR}/heap.o: heap.c 
 	${MKDIR} -p ${OBJECTDIR}

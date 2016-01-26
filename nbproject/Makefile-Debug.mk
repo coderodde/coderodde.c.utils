@@ -35,6 +35,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
+	${OBJECTDIR}/fibonacci_heap.o \
 	${OBJECTDIR}/heap.o \
 	${OBJECTDIR}/list.o \
 	${OBJECTDIR}/main.o \
@@ -45,7 +46,7 @@ OBJECTFILES= \
 
 
 # C Compiler Flags
-CFLAGS=-O3
+CFLAGS=-O3 -ansi -pedantic -Wall
 
 # CC Compiler Flags
 CCFLAGS=
@@ -67,6 +68,11 @@ LDLIBSOPTIONS=
 ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/crtreemap: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/crtreemap ${OBJECTFILES} ${LDLIBSOPTIONS}
+
+${OBJECTDIR}/fibonacci_heap.o: fibonacci_heap.c 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/fibonacci_heap.o fibonacci_heap.c
 
 ${OBJECTDIR}/heap.o: heap.c 
 	${MKDIR} -p ${OBJECTDIR}
