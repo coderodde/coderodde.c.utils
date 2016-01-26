@@ -8,6 +8,7 @@ The main aim of this project is to provide implementations of most fundamental d
 - [x] `unordered_map_t` (a unordered map using a hash table)
 - [x] `unordered_set_t` (a unordered set using a hash table)
 - [x] `heap_t` (a `d`-ary heap)
+- [x] `fibonacci_heap_t`
 - [x] `list_t` (an array based list supporting fast insertion/removal from both ends)
 
 ### POSSIBLY:
