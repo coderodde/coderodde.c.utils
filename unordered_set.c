@@ -237,7 +237,6 @@ bool unordered_set_t_remove(unordered_set_t* p_set, void* p_key)
             }
             else
             {
-                // Here?
                 p_set->p_table[index] = p_current_entry->p_chain_next;
             }
 
