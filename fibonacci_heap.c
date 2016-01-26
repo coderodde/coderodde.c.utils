@@ -463,9 +463,51 @@ int fibonacci_heap_t_size(fibonacci_heap_t* p_heap)
     return unordered_map_t_size(p_heap->p_node_map);
 }
 
+static void clear_nodes_impl(fibonacci_heap_node_t* node)
+{
+    fibonacci_heap_node_t* current;
+    fibonacci_heap_node_t* next_sibling;
+    
+    if (!node->p_child) 
+    {
+        free(node);
+        return;
+    }
+    
+    current = node->p_child;
+    
+    while (true) 
+    {
+        next_sibling = current->p_right;
+        clear_nodes_impl(current);
+        current = next_sibling;
+        
+        if (current == node->p_child)
+        {
+            free(node);
+            return;
+        }
+    }
+}
+
 void fibonacci_heap_t_clear(fibonacci_heap_t* p_heap)
 {
+    fibonacci_heap_node_t* current;
     
+    if (!p_heap) return;
+    if (!p_heap->p_minimum_node) return;
+    
+    current = p_heap->p_minimum_node;
+    
+    while (true)
+    {
+        clear_nodes_impl(current);
+        current = current->p_right;
+        
+        if (current == p_heap->p_minimum_node) break;
+    }
+    
+    unordered_map_t_clear(p_heap->p_node_map);
 }
 
 static bool tree_is_healthy(fibonacci_heap_t* p_heap,

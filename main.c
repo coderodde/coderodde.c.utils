@@ -1081,6 +1081,22 @@ static void test_fibonacci_heap_correctness()
     
     ASSERT(fibonacci_heap_t_min(p_heap) == NULL);
     ASSERT(fibonacci_heap_t_extract_min(p_heap) == NULL);
+    
+    for (i = 20; i < 40; ++i) 
+    {
+        ASSERT(fibonacci_heap_t_add(p_heap, i, i));
+    }
+    
+    ASSERT(fibonacci_heap_t_size(p_heap) == 20);
+    
+    fibonacci_heap_t_clear(p_heap);
+    
+    ASSERT(fibonacci_heap_t_size(p_heap) == 0);
+    
+    for (i = 0; i < 100; ++i) 
+    {
+        ASSERT(fibonacci_heap_t_contains_key(p_heap, i) == false);
+    }
 }
 
 static void test_fibonacci_heap_performance()
@@ -1128,45 +1144,27 @@ static void test_fibonacci_heap_performance()
     printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);
 }
 
-static void small_fibonacci_test()
-{
-    fibonacci_heap_t* heap = 
-            fibonacci_heap_t_alloc(3, 
-                                   1.0f, 
-                                   hash_function, 
-                                   equals_function, 
-                                   priority_cmp);
-    
-    for (int i = 0; i <= 200; ++i) 
-    {
-        fibonacci_heap_t_add(heap, i, i);
-    }
-    
-    fibonacci_heap_t_add(heap, 992, 992);
-    fibonacci_heap_t_decrease_key(heap, 992, -1);
-    
-    while (fibonacci_heap_t_size(heap) > 0) 
-    {
-        printf("%d\n", fibonacci_heap_t_extract_min(heap));
-    }
-}
-
 int main(int argc, char** argv) {
-    /*test_list_correctness();
+    test_list_correctness();
     test_list_performance();
+    
     test_unordered_map_correctness();
     test_unordered_map_performance();
+    
     test_unordered_set_correctness();
     test_unordered_set_performance();
+    
     test_map_correctness();
     test_map_performance();
+    
     test_set_correctness();
-    test_set_performance();*/
+    test_set_performance();
+    
     test_heap_correctness();
     test_heap_performance();
     
     test_fibonacci_heap_correctness();
     test_fibonacci_heap_performance(); 
-    /*small_fibonacci_test();*/
+    
     return (EXIT_SUCCESS);
 }
