@@ -6,6 +6,13 @@
     </data>
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/Users/rodionefremov/NetBeansProjects/CRTreeMap/fibonacci_heap.h</file>
+            <file>file:/Users/rodionefremov/NetBeansProjects/CRTreeMap/unordered_map.h</file>
+            <file>file:/Users/rodionefremov/NetBeansProjects/CRTreeMap/main.c</file>
+            <file>file:/Users/rodionefremov/NetBeansProjects/CRTreeMap/fibonacci_heap.c</file>
+            <file>file:/Users/rodionefremov/NetBeansProjects/CRTreeMap/unordered_set.h</file>
+            <file>file:/Users/rodionefremov/NetBeansProjects/CRTreeMap/unordered_set.c</file>
+        </group>
     </open-files>
 </project-private>
