@@ -45,7 +45,7 @@ static void test_map_performance()
     int value;
     void* p_key;
     void* p_value;
-    
+    int seed;
     int* array = malloc(sizeof(int) * sz);
  
     puts("--- PERFORMANCE OF map_t ---");
@@ -53,7 +53,7 @@ static void test_map_performance()
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
-    int seed = time(NULL);
+    seed = time(NULL);
     printf("Seed: %d.\n", seed);
     srand(seed);
     
@@ -116,7 +116,7 @@ static void test_map_performance()
         
         if (value != 3 * array[i]) 
         {
-            printf("Key: %d, value: %d, index: %d, map size: %u, "
+            printf("Key: %d, value: %d, index: %d, map size: %zu, "
                    "contains: %d.\n",
                     array[i], 
                     value, 
@@ -171,7 +171,7 @@ static void test_unordered_map_performance()
     int value;
     void* p_key;
     void* p_value;
-    
+    int seed;
     int* array = malloc(sizeof(int) * sz);
  
     puts("--- PERFORMANCE OF unordered_map_t ---");
@@ -179,7 +179,7 @@ static void test_unordered_map_performance()
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
-    int seed = 1441177757;time(NULL);
+    seed = time(NULL);
     printf("Seed: %d.\n", seed);
     srand(seed);
     
@@ -253,7 +253,7 @@ static void test_unordered_map_performance()
         
         if (value != 3 * array[i]) 
         {
-            printf("Key: %d, value: %d, index: %d, map size: %d, "
+            printf("Key: %d, value: %d, index: %d, map size: %zu, "
                    "contains: %d.\n",
                     array[i], 
                     value, 
@@ -295,7 +295,7 @@ static void test_set_performance()
     int b;
     int tmp;
     void* p_element;
-    
+    int seed;
     int* array = malloc(sizeof(int) * sz);
  
     puts("--- PERFORMANCE OF set_t ---");
@@ -303,7 +303,7 @@ static void test_set_performance()
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
-    int seed = time(NULL);
+    seed = time(NULL);
     printf("Seed: %d.\n", seed);
     srand(seed);
     
@@ -368,7 +368,7 @@ static void test_set_performance()
     p_iterator = set_iterator_t_alloc(p_set);
     
     /* Empty iterator. */
-    while (map_iterator_t_has_next(p_iterator)) 
+    while (set_iterator_t_has_next(p_iterator)) 
     {
         set_iterator_t_next(p_iterator, &p_element);
     }
@@ -619,7 +619,7 @@ static void test_unordered_set_performance()
     int tmp;
     void* p_element;
     bool* p_check_list;
-    
+    int seed;
     int* array = malloc(sizeof(int) * sz);
     p_check_list = calloc(sz, sizeof(bool));
     
@@ -628,7 +628,7 @@ static void test_unordered_set_performance()
     for (i = 0; i < sz; ++i) 
         array[i] = i;
     
-    int seed = time(NULL);
+    seed = time(NULL);
     printf("Seed: %d.\n", seed);
     srand(seed);
     
@@ -695,12 +695,12 @@ static void test_unordered_set_performance()
     }
     
     duration += ((double) clock() - t);
-    printf("Healthy: %d\n", set_t_is_healthy(p_set));
+    printf("Healthy: %d\n", unordered_set_t_is_healthy(p_set));
     
     p_iterator = unordered_set_iterator_t_alloc(p_set);
     
     /* Empty iterator. */
-    while (unordered_map_iterator_t_has_next(p_iterator)) 
+    while (unordered_set_iterator_t_has_next(p_iterator)) 
     {
         unordered_set_iterator_t_next(p_iterator, &p_element);
     }
@@ -710,7 +710,7 @@ static void test_unordered_set_performance()
 
 static int priority_cmp(void* a, void* b) 
 {
-    return a - b;
+    return ((int) a) - ((int) b);
 }
 
 static void test_heap_correctness() 
@@ -748,7 +748,7 @@ static void test_heap_correctness()
     
     for (i = 29; i != (size_t) -1; --i) 
     {
-        ASSERT(heap_t_extract_min(p_heap) == i);
+        ASSERT((int) heap_t_extract_min(p_heap) == i);
     }
     
     ASSERT(heap_t_size(p_heap) == 0);
@@ -761,19 +761,19 @@ static void test_heap_correctness()
     
     ASSERT(heap_t_decrease_key(p_heap, 50, 0));
     
-    ASSERT(heap_t_min(p_heap) == 50);
-    ASSERT(heap_t_extract_min(p_heap) == 50);
+    ASSERT((size_t) heap_t_min(p_heap) == 50);
+    ASSERT((size_t) heap_t_extract_min(p_heap) == 50);
     
     for (i = 10; i < 50; ++i) 
     {
-        ASSERT(heap_t_min(p_heap) == i);
-        ASSERT(heap_t_extract_min(p_heap) == i);
+        ASSERT((size_t) heap_t_min(p_heap) == i);
+        ASSERT((size_t) heap_t_extract_min(p_heap) == i);
     }
     
     for (i = 51; i < 100; ++i) 
     {
-        ASSERT(heap_t_min(p_heap) == i);
-        ASSERT(heap_t_extract_min(p_heap) == i);
+        ASSERT((size_t) heap_t_min(p_heap) == i);
+        ASSERT((size_t) heap_t_extract_min(p_heap) == i);
     }
     
     ASSERT(heap_t_min(p_heap) == NULL);
@@ -794,7 +794,7 @@ static void test_heap_performance()
     for (degree = 2; degree <= 10; ++degree)
     {
         duration = 0.0;
-        printf("Degree %d:\n", degree);
+        printf("Degree %zu:\n", degree);
         p_heap = heap_t_alloc(degree,
                               10,
                               1.0f,
@@ -850,13 +850,13 @@ static void test_list_correctness()
     
     for (i = 0; i < 40; ++i) 
     {
-        ASSERT(list_t_get(p_list, i) == 2 * i);
+        ASSERT((size_t) list_t_get(p_list, i) == 2 * i);
     }
     
     for (i = 0; i < 40; ++i) 
     {
         ASSERT(list_t_size(p_list) > 0);
-        ASSERT(list_t_pop_front(p_list) == 2 * i);
+        ASSERT((size_t) list_t_pop_front(p_list) == 2 * i);
     }
     
     ASSERT(list_t_size(p_list) == 0);

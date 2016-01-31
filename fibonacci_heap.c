@@ -9,30 +9,30 @@
 static const double LOG_PHI = 0.4813;
 static const size_t DEFAULT_NODE_ARRAY_CAPACITY = 16;
 
-typedef struct fibonacci_heap_node_t {
+typedef struct heap_node {
     void*                         p_element;
     void*                         p_priority;
-    struct fibonacci_heap_node_t* p_parent;
-    struct fibonacci_heap_node_t* p_left;
-    struct fibonacci_heap_node_t* p_right;
-    struct fibonacci_heap_node_t* p_child;
+    struct heap_node* p_parent;
+    struct heap_node* p_left;
+    struct heap_node* p_right;
+    struct heap_node* p_child;
     size_t                        degree;
     bool                          marked;
-} fibonacci_heap_node_t;
+} heap_node;
 
 struct fibonacci_heap {
     unordered_map_t*        p_node_map;
-    fibonacci_heap_node_t*  p_minimum_node;
-    fibonacci_heap_node_t** p_node_array;
+    heap_node*  p_minimum_node;
+    heap_node** p_node_array;
     size_t                  node_array_capacity;
     size_t                (*p_hash_function)(void*);
     bool                  (*p_equals_function)(void*, void*);
     int                   (*p_key_compare_function)(void*, void*);
 };
 
-static fibonacci_heap_node_t* fibonacci_heap_node_alloc(void* p_element, 
+static heap_node* fibonacci_heap_node_alloc(void* p_element, 
                                                           void* p_priority) {
-    fibonacci_heap_node_t* p_node = malloc(sizeof(fibonacci_heap_node_t));
+    heap_node* p_node = malloc(sizeof(heap_node));
 
     if (!p_node) 
     {
@@ -68,7 +68,7 @@ fibonacci_heap_alloc(size_t map_initial_capacity,
 
     if (!p_ret) return NULL;
 
-    p_ret->p_node_array = malloc(sizeof(fibonacci_heap_node_t*) *
+    p_ret->p_node_array = malloc(sizeof(heap_node*) *
                                  DEFAULT_NODE_ARRAY_CAPACITY);
 
     if (!p_ret->p_node_array) 
@@ -102,7 +102,7 @@ bool fibonacci_heap_add(fibonacci_heap* p_heap,
                           void* p_element, 
                           void* p_priority) 
 {
-    fibonacci_heap_node_t* p_node;
+    heap_node* p_node;
 
     if (!p_heap) return false;
     if (unordered_map_t_contains_key(p_heap->p_node_map, 
@@ -134,9 +134,7 @@ bool fibonacci_heap_add(fibonacci_heap* p_heap,
     return true;
 }
 
-static void cut(fibonacci_heap* p_heap,
-                fibonacci_heap_node_t* x, 
-                fibonacci_heap_node_t* y)
+static void cut(fibonacci_heap* p_heap, heap_node* x, heap_node* y)
 {
     x->p_left->p_right = x->p_right;
     x->p_right->p_left = x->p_left;
@@ -161,9 +159,9 @@ static void cut(fibonacci_heap* p_heap,
     x->marked = false;
 }
 
-static void cascading_cut(fibonacci_heap* p_heap, fibonacci_heap_node_t* y)
+static void cascading_cut(fibonacci_heap* p_heap, heap_node* y)
 {
-    fibonacci_heap_node_t* z = y->p_parent;
+    heap_node* z = y->p_parent;
 
     if (z)
     {
@@ -183,8 +181,8 @@ bool fibonacci_heap_decrease_key(fibonacci_heap* p_heap,
                                    void* p_element, 
                                    void* p_priority)
 {
-    fibonacci_heap_node_t* x;
-    fibonacci_heap_node_t* y;
+    heap_node* x;
+    heap_node* y;
 
     if (!p_heap) return false;
 
@@ -220,7 +218,7 @@ static bool check_array(fibonacci_heap* p_heap, size_t size)
     if (p_heap->node_array_capacity < size) 
     {
         free(p_heap->p_node_array);
-        p_heap->p_node_array = malloc(sizeof(fibonacci_heap_node_t*) * size);
+        p_heap->p_node_array = malloc(sizeof(heap_node*) * size);
 
         if (!p_heap->p_node_array) 
         {
@@ -236,7 +234,7 @@ static bool check_array(fibonacci_heap* p_heap, size_t size)
     }
 }
 
-static void link(fibonacci_heap_node_t* y, fibonacci_heap_node_t* x)
+static void link(heap_node* y, heap_node* x)
 {
     y->p_left->p_right = y->p_right;
     y->p_right->p_left = y->p_left;
@@ -271,17 +269,17 @@ static void consolidate(fibonacci_heap* p_heap)
     size_t number_of_roots;
     size_t degree;
     size_t i;
-    fibonacci_heap_node_t* x;
-    fibonacci_heap_node_t* y;
-    fibonacci_heap_node_t* tmp;
-    fibonacci_heap_node_t* next;
+    heap_node* x;
+    heap_node* y;
+    heap_node* tmp;
+    heap_node* next;
 
     check_array(p_heap, array_size);
 
     /* Set the internal node array components to NULL. */
     memset(p_heap->p_node_array, 
            0, 
-           array_size * sizeof(fibonacci_heap_node_t*));
+           array_size * sizeof(heap_node*));
 
     number_of_roots = 0;
     x = p_heap->p_minimum_node;
@@ -361,10 +359,10 @@ static void consolidate(fibonacci_heap* p_heap)
 
 void* fibonacci_heap_extract_min(fibonacci_heap* p_heap)
 {
-    fibonacci_heap_node_t* z;
-    fibonacci_heap_node_t* x;
-    fibonacci_heap_node_t* tmp_right;
-    fibonacci_heap_node_t* node_to_free;
+    heap_node* z;
+    heap_node* x;
+    heap_node* tmp_right;
+    heap_node* node_to_free;
 
     void* p_ret;
     size_t number_of_children;
@@ -458,10 +456,10 @@ int fibonacci_heap_size(fibonacci_heap* p_heap)
     return unordered_map_t_size(p_heap->p_node_map);
 }
 
-static void clear_nodes_impl(fibonacci_heap_node_t* node)
+static void clear_nodes_impl(heap_node* node)
 {
-    fibonacci_heap_node_t* current;
-    fibonacci_heap_node_t* next_sibling;
+    heap_node* current;
+    heap_node* next_sibling;
 
     if (!node->p_child) 
     {
@@ -487,7 +485,7 @@ static void clear_nodes_impl(fibonacci_heap_node_t* node)
 
 void fibonacci_heap_clear(fibonacci_heap* p_heap)
 {
-    fibonacci_heap_node_t* current;
+    heap_node* current;
 
     if (!p_heap) return;
     if (!p_heap->p_minimum_node) return;
@@ -505,10 +503,9 @@ void fibonacci_heap_clear(fibonacci_heap* p_heap)
     unordered_map_t_clear(p_heap->p_node_map);
 }
 
-static bool tree_is_healthy(fibonacci_heap* p_heap,
-                            fibonacci_heap_node_t* node)
+static bool tree_is_healthy(fibonacci_heap* p_heap, heap_node* node)
 {
-    fibonacci_heap_node_t* begin;
+    heap_node* begin;
 
     if (!node)          return true;
 
@@ -534,7 +531,7 @@ static bool tree_is_healthy(fibonacci_heap* p_heap,
 
 static bool check_root_list(fibonacci_heap* p_heap)
 {
-    fibonacci_heap_node_t* current = p_heap->p_minimum_node;
+    heap_node* current = p_heap->p_minimum_node;
 
     while (true)
     {
@@ -553,7 +550,7 @@ static bool check_root_list(fibonacci_heap* p_heap)
 
 bool fibonacci_heap_is_healthy(fibonacci_heap* p_heap)
 {
-    fibonacci_heap_node_t* root;
+    heap_node* root;
 
     if (!p_heap) return false;
     if (!p_heap->p_minimum_node) return true;

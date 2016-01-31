@@ -11,19 +11,19 @@ typedef struct map_entry_t {
     int                 height;
 } map_entry_t;
 
-typedef struct map_t {
+struct map_t {
     map_entry_t* p_root;
     int (*p_comparator)(void*, void*);
     size_t size;
     size_t mod_count;
-} map_t;
+};
 
-typedef struct map_iterator_t {
+struct map_iterator_t {
     map_t*       p_map;
     map_entry_t* p_next;
     size_t       iterated_count;
     size_t       expected_mod_count;
-} map_iterator_t;
+};
     
 /*******************************************************************************
 * Creates a new map entry and initializes its fields.                          *
@@ -563,8 +563,11 @@ size_t map_t_size(map_t* p_map)
 
 map_iterator_t* map_iterator_t_alloc(map_t* p_map)
 {
+    map_iterator_t* p_iterator;
+    
     if (!p_map) return NULL;
-    map_iterator_t* p_iterator = malloc(sizeof(*p_iterator));
+    
+    p_iterator = malloc(sizeof(*p_iterator));
     p_iterator->expected_mod_count = p_map->mod_count;
     p_iterator->iterated_count = 0;
     p_iterator->p_map = p_map;

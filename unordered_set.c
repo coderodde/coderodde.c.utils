@@ -9,7 +9,7 @@ typedef struct unordered_set_entry_t {
     struct unordered_set_entry_t* p_next;
 } unordered_set_entry_t;
 
-typedef struct unordered_set_t {
+struct unordered_set_t {
     unordered_set_entry_t** p_table;
     unordered_set_entry_t*  p_head;
     unordered_set_entry_t*  p_tail;
@@ -21,7 +21,7 @@ typedef struct unordered_set_t {
     size_t                  mask;
     size_t                  max_allowed_size;
     float                   load_factor;
-} unordered_set_t;
+};
 
 struct unordered_set_iterator_t {
     unordered_set_t*       p_map;

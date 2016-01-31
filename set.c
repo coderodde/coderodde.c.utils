@@ -10,12 +10,12 @@ typedef struct set_entry_t {
     int                 height;
 } set_entry_t;
 
-typedef struct set_t {
+struct set_t {
     set_entry_t*   p_root;
     int          (*p_comparator)(void*, void*);
     size_t         size;
     size_t         mod_count;
-} set_t;
+};
 
 struct set_iterator_t {
     set_t*       p_set;
@@ -535,8 +535,11 @@ size_t set_t_size(set_t* p_set)
 
 set_iterator_t* set_iterator_t_alloc(set_t* p_set)
 {
+    set_iterator_t* p_iterator;
+    
     if (!p_set) return NULL;
-    set_iterator_t* p_iterator = malloc(sizeof(*p_iterator));
+    
+    p_iterator = malloc(sizeof(*p_iterator));
     p_iterator->expected_mod_count = p_set->mod_count;
     p_iterator->iterated_count = 0;
     p_iterator->p_set = p_set;

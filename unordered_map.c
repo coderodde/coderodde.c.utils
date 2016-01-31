@@ -10,7 +10,7 @@ typedef struct unordered_map_entry_t {
     struct unordered_map_entry_t* p_next;
 } unordered_map_entry_t;
 
-typedef struct unordered_map_t {
+struct unordered_map_t {
     unordered_map_entry_t** p_table;
     unordered_map_entry_t*  p_head;
     unordered_map_entry_t*  p_tail;
@@ -22,14 +22,14 @@ typedef struct unordered_map_t {
     size_t                  max_allowed_size;
     size_t                  mask;
     float                   load_factor;
-} unordered_map_t;
+};
 
-typedef struct unordered_map_iterator_t {
+struct unordered_map_iterator_t {
     unordered_map_t*       p_map;
     unordered_map_entry_t* p_next_entry;
     size_t                 iterated_count;
     size_t                 expected_mod_count;
-} unordered_map_iterator_t;
+};
 
 static unordered_map_entry_t* unordered_map_entry_t_alloc(void* p_key,
                                                           void* p_value)
