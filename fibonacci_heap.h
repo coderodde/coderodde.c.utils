@@ -11,14 +11,14 @@ extern "C" {
     typedef struct fibonacci_heap fibonacci_heap;
 
     /***************************************************************************
-    * Allocates a new, empty Fibonacci heap.                                   *
+    * Allocates a new empty Fibonacci heap.                                    *
     ***************************************************************************/  
     fibonacci_heap* 
     fibonacci_heap_alloc(size_t initial_capacity,
                          float  load_factor,
-                         size_t (*p_hash_function)(void*),
-                         bool   (*p_equals_function)(void*, void*),
-                         int    (*p_priority_compare_function)(void*, void*));
+                         size_t (*hash_function)(void*),
+                         bool   (*equals_function)(void*, void*),
+                         int    (*priority_compare_function)(void*, void*));
 
     /***************************************************************************
     * Adds a new element and its priority to the heap only if it is not        *
@@ -29,7 +29,7 @@ extern "C" {
                             void* priority);
 
     /***************************************************************************
-    * Attempts to assign a higher priority to the element. Return true only    *       
+    * Attempts to assign a higher priority to the element. Returns true only   *       
     * if the structure of the heap changed due to this call.                   * 
     ***************************************************************************/  
     bool fibonacci_heap_decrease_key(fibonacci_heap* heap, 

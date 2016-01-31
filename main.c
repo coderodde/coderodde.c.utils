@@ -1098,6 +1098,8 @@ static void test_fibonacci_heap_correctness()
     {
         ASSERT(fibonacci_heap_contains_key(p_heap, i) == false);
     }
+    
+    fibonacci_heap_free(p_heap);
 }
 
 static void test_fibonacci_heap_performance()
@@ -1146,23 +1148,23 @@ static void test_fibonacci_heap_performance()
 }
 
 int main(int argc, char** argv) {
-    test_list_correctness();
-    test_list_performance();
-    
-    test_unordered_map_correctness();
-    test_unordered_map_performance();
-    
-    test_unordered_set_correctness();
-    test_unordered_set_performance();
-    
-    test_map_correctness();
-    test_map_performance();
-    
-    test_set_correctness();
-    test_set_performance();
-    
-    test_heap_correctness();
-    test_heap_performance();
+//    test_list_correctness();
+//    test_list_performance();
+//    
+//    test_unordered_map_correctness();
+//    test_unordered_map_performance();
+//    
+//    test_unordered_set_correctness();
+//    test_unordered_set_performance();
+//    
+//    test_map_correctness();
+//    test_map_performance();
+//    
+//    test_set_correctness();
+//    test_set_performance();
+//    
+//    test_heap_correctness();
+//    test_heap_performance();
     
     test_fibonacci_heap_correctness();
     test_fibonacci_heap_performance(); 
