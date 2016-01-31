@@ -653,7 +653,6 @@ static void test_unordered_set_performance()
     
     printf("Healthy: %d\n", unordered_set_t_is_healthy(p_set));
     p_iterator = unordered_set_iterator_t_alloc(p_set);
-    
     t = clock();
     
     while (unordered_set_iterator_t_has_next(p_iterator)) 
@@ -662,6 +661,7 @@ static void test_unordered_set_performance()
         
         p_check_list[(int) p_element] = true;
     }
+    
     
     duration += ((double) clock() - t);
     
@@ -870,7 +870,7 @@ static void test_list_correctness()
     
     for (i = 200; i > 0; --i) 
     {
-        ASSERT(list_t_pop_back(p_list) == i);
+        ASSERT((size_t) list_t_pop_back(p_list) == i);
     }
     
     ASSERT(list_t_size(p_list) == 0);
@@ -879,9 +879,9 @@ static void test_list_correctness()
     ASSERT(list_t_insert(p_list, 1, 1));
     ASSERT(list_t_insert(p_list, 0, 2));
     
-    ASSERT(list_t_get(p_list, 0) == 2);
-    ASSERT(list_t_get(p_list, 1) == 0);
-    ASSERT(list_t_get(p_list, 2) == 1);
+    ASSERT((size_t) list_t_get(p_list, 0) == 2);
+    ASSERT((size_t) list_t_get(p_list, 1) == 0);
+    ASSERT((size_t) list_t_get(p_list, 2) == 1);
     
     /* <2, 0, 1> */
     ASSERT(list_t_insert(p_list, 0, 10));
@@ -893,16 +893,16 @@ static void test_list_correctness()
     ASSERT(list_t_insert(p_list, 3, 14));
     /* <10, 2, 12, 14, 0, 1, 11> */
     
-    ASSERT(list_t_get(p_list, 0) == 10);
-    ASSERT(list_t_get(p_list, 1) == 2);
-    ASSERT(list_t_get(p_list, 2) == 12);
-    ASSERT(list_t_get(p_list, 3) == 14);
-    ASSERT(list_t_get(p_list, 4) == 0);
-    ASSERT(list_t_get(p_list, 5) == 1);
-    ASSERT(list_t_get(p_list, 6) == 11);
+    ASSERT((size_t) list_t_get(p_list, 0) == 10);
+    ASSERT((size_t) list_t_get(p_list, 1) == 2);
+    ASSERT((size_t) list_t_get(p_list, 2) == 12);
+    ASSERT((size_t) list_t_get(p_list, 3) == 14);
+    ASSERT((size_t) list_t_get(p_list, 4) == 0);
+    ASSERT((size_t) list_t_get(p_list, 5) == 1);
+    ASSERT((size_t) list_t_get(p_list, 6) == 11);
     
-    ASSERT(list_t_set(p_list, 5, 100) == 1);
-    ASSERT(list_t_get(p_list, 5) == 100);
+    ASSERT((size_t) list_t_set(p_list, 5, 100) == 1);
+    ASSERT((size_t) list_t_get(p_list, 5) == 100);
     
     ASSERT(list_t_size(p_list) == 7);
     
@@ -921,20 +921,20 @@ static void test_list_correctness()
     /* <10, 2, 12, 14, 0, 100, 11*/
     ASSERT(list_t_remove_at(p_list, 4) == 0);
     /* <10, 2, 12, 14, 100, 11> */
-    ASSERT(list_t_remove_at(p_list, 4) == 100);
+    ASSERT((int) list_t_remove_at(p_list, 4) == 100);
     /* <10, 2, 12, 14, 11> */
-    ASSERT(list_t_remove_at(p_list, 4) == 11);
+    ASSERT((int) list_t_remove_at(p_list, 4) == 11);
     /* <10, 2, 12, 14> */
-    ASSERT(list_t_remove_at(p_list, 0) == 10);
+    ASSERT((int) list_t_remove_at(p_list, 0) == 10);
     /* <2, 12, 14> */
     ASSERT(list_t_remove_at(p_list, 4) == NULL);
     ASSERT(list_t_remove_at(p_list, 3) == NULL);
     /* <2, 12, 14> */
-    ASSERT(list_t_remove_at(p_list, 1) == 12);
+    ASSERT((int) list_t_remove_at(p_list, 1) == 12);
     /* <2, 14> */
-    ASSERT(list_t_remove_at(p_list, 1) == 14);
+    ASSERT((int) list_t_remove_at(p_list, 1) == 14);
     /* <2> */
-    ASSERT(list_t_remove_at(p_list, 0) == 2);
+    ASSERT((int) list_t_remove_at(p_list, 0) == 2);
     
     ASSERT(list_t_size(p_list) == 0);
     
@@ -943,11 +943,11 @@ static void test_list_correctness()
         ASSERT(list_t_push_front(p_list, 2 * i + 1));
     }
     
-    ASSERT(list_t_remove_at(p_list, 2) == 5);
-    ASSERT(list_t_pop_front(p_list) == 9);
-    ASSERT(list_t_pop_back(p_list) == 1);
-    ASSERT(list_t_pop_front(p_list) == 7);
-    ASSERT(list_t_pop_back(p_list) == 3);
+    ASSERT((int) list_t_remove_at(p_list, 2) == 5);
+    ASSERT((int) list_t_pop_front(p_list) == 9);
+    ASSERT((int) list_t_pop_back(p_list) == 1);
+    ASSERT((int) list_t_pop_front(p_list) == 7);
+    ASSERT((int) list_t_pop_back(p_list) == 3);
     
     list_t_insert(p_list, 0, 1);
     list_t_insert(p_list, 0, 2);
@@ -969,11 +969,12 @@ static void test_list_performance()
     int a;
     int b;
     int tmp;
+    int time_;
     void* p_element;
     
     puts("--- PERFORMANCE OF list_t ---");
     
-    int time_ = time(NULL);
+    time_ = time(NULL);
     printf("Seed: %d.\n", time_);
     srand(time_);
     
@@ -995,7 +996,7 @@ static void test_list_performance()
 
     for (i = 0; i < sz; ++i) 
     {
-        ASSERT(list_t_get(p_list, i) == i);
+        ASSERT((int) list_t_get(p_list, i) == i);
     }
     
     duration += ((double) clock() - t);
@@ -1004,7 +1005,7 @@ static void test_list_performance()
     
     for (i = 0; i < sz; ++i)
     {
-        ASSERT(list_t_pop_front(p_list) == i);
+        ASSERT((int) list_t_pop_front(p_list) == i);
     }
     
     duration += ((double) clock() - t);
@@ -1051,7 +1052,7 @@ static void test_fibonacci_heap_correctness()
     
     for (i = 29; i != (size_t) -1; --i) 
     {
-        ASSERT(fibonacci_heap_extract_min(p_heap) == i);
+        ASSERT((size_t) fibonacci_heap_extract_min(p_heap) == i);
     }
     
     ASSERT(fibonacci_heap_size(p_heap) == 0);
@@ -1064,19 +1065,19 @@ static void test_fibonacci_heap_correctness()
     
     ASSERT(fibonacci_heap_decrease_key(p_heap, 50, 0));
     
-    ASSERT(fibonacci_heap_min(p_heap) == 50);
-    ASSERT(fibonacci_heap_extract_min(p_heap) == 50);
+    ASSERT((size_t) fibonacci_heap_min(p_heap) == 50);
+    ASSERT((size_t) fibonacci_heap_extract_min(p_heap) == 50);
     
     for (i = 10; i < 50; ++i) 
     {
-        ASSERT(fibonacci_heap_min(p_heap) == i);
-        ASSERT(fibonacci_heap_extract_min(p_heap) == i);
+        ASSERT((size_t) fibonacci_heap_min(p_heap) == i);
+        ASSERT((size_t) fibonacci_heap_extract_min(p_heap) == i);
     }
     
     for (i = 51; i < 100; ++i) 
     {
-        ASSERT(fibonacci_heap_min(p_heap) == i);
-        ASSERT(fibonacci_heap_extract_min(p_heap) == i);
+        ASSERT((size_t) fibonacci_heap_min(p_heap) == i);
+        ASSERT((size_t) fibonacci_heap_extract_min(p_heap) == i);
     }
     
     ASSERT(fibonacci_heap_min(p_heap) == NULL);

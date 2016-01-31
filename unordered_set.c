@@ -250,9 +250,9 @@ bool unordered_set_t_remove(unordered_set_t* p_set, void* p_key)
                 p_set->p_head = p_current_entry->p_next;
             }
             
-            if (p_current_entry->p_prev)
+            if (p_current_entry->p_next)
             {
-                p_current_entry->p_prev->p_next = p_current_entry->p_prev;
+                p_current_entry->p_next->p_prev = p_current_entry->p_prev;
             }
             else
             {
