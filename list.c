@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-struct list_t {
+struct list {
     void** p_table;
     size_t size;
     size_t capacity;
@@ -23,17 +23,23 @@ static size_t fix_initial_capacity(size_t initial_capacity)
 
     initial_capacity = max(initial_capacity, MINIMUM_CAPACITY);
 
-    while (ret < initial_capacity) ret <<= 1;
-
+    while (ret < initial_capacity) 
+    {
+        ret <<= 1;
+    }
+    
     return ret;
 }
 
-list_t* list_t_alloc(size_t initial_capacity)
+list* list_alloc(size_t initial_capacity)
 {
-    list_t* p_ret = malloc(sizeof(*p_ret));
+    list* p_ret = malloc(sizeof(*p_ret));
 
-    if (!p_ret) return NULL;
-
+    if (!p_ret) 
+    {
+        return NULL;
+    }
+    
     initial_capacity = fix_initial_capacity(initial_capacity);
 
     p_ret->p_table = malloc(sizeof(void*) * initial_capacity);
@@ -52,55 +58,76 @@ list_t* list_t_alloc(size_t initial_capacity)
     return p_ret;
 }
 
-static bool ensure_capacity_before_add(list_t* p_list)
+static bool ensure_capacity_before_add(list* my_list)
 {
     void** p_new_table;
     size_t i;
     size_t new_capacity;
 
-    if (p_list->size < p_list->capacity) return true;
-
-    new_capacity = 2 * p_list->capacity;
+    if (my_list->size < my_list->capacity)
+    {
+        return true;
+    }
+    
+    new_capacity = 2 * my_list->capacity;
     p_new_table  = malloc(sizeof(void*) * new_capacity);
 
-    if (!p_new_table) return false;
-
-    for (i = 0; i < p_list->size; ++i) 
+    if (!p_new_table) 
     {
-        p_new_table[i] = p_list->p_table[(p_list->head + i) & p_list->mask];
+        return false;
+    }
+    
+    for (i = 0; i < my_list->size; ++i) 
+    {
+        p_new_table[i] = my_list->p_table[(my_list->head + i) & my_list->mask];
     }
 
-    free(p_list->p_table);
-    p_list->p_table  = p_new_table;
-    p_list->capacity = new_capacity;
-    p_list->mask     = new_capacity - 1;
-    p_list->head     = 0;
+    free(my_list->p_table);
+    my_list->p_table  = p_new_table;
+    my_list->capacity = new_capacity;
+    my_list->mask     = new_capacity - 1;
+    my_list->head     = 0;
 
     return true;
 }
 
-bool list_t_push_front(list_t* p_list, void* p_element)
+bool list_push_front(list* my_list, void* element)
 {
-    if (!p_list)                             return false;
-    if (!ensure_capacity_before_add(p_list)) return false;
-
-    p_list->head = (p_list->head - 1) & p_list->mask;
-    p_list->p_table[p_list->head] = p_element;
-    p_list->size++;
+    if (!my_list)           
+    {
+        return false;
+    }
+    
+    if (!ensure_capacity_before_add(my_list)) 
+    {
+        return false;
+    }
+    
+    my_list->head = (my_list->head - 1) & my_list->mask;
+    my_list->p_table[my_list->head] = element;
+    my_list->size++;
+    
     return true;
 }
 
-bool list_t_push_back(list_t* p_list, void* p_element)
+bool list_push_back(list* my_list, void* element)
 {
-    if (!p_list)                             return false;
-    if (!ensure_capacity_before_add(p_list)) return false;
-
-    p_list->p_table[(p_list->head + p_list->size) & p_list->mask] = p_element;
-    p_list->size++;
+    if (!my_list)                             
+    {
+        return false;
+    }
+    
+    if (!ensure_capacity_before_add(my_list))
+    {
+        return false;
+    }
+    
+    my_list->p_table[(my_list->head + my_list->size) & my_list->mask] = element;
+    my_list->size++;
     return true;
 }
 
-bool list_t_insert(list_t* p_list, size_t index, void* p_element)
+bool list_insert(list* my_list, size_t index, void* element)
 {
     size_t elements_before;
     size_t elements_after;
@@ -109,96 +136,136 @@ bool list_t_insert(list_t* p_list, size_t index, void* p_element)
     size_t mask;
     size_t size;
 
-    if (!p_list)                             return false;
-    if (!ensure_capacity_before_add(p_list)) return false;
-    if (index > p_list->size)                return false;
-
+    if (!my_list)                          
+    {
+        return false;
+    }
+        
+    if (!ensure_capacity_before_add(my_list)) 
+    {
+        return false;
+    }
+    
+    if (index > my_list->size)                
+    {
+        return false;
+    }
+    
     elements_before = index;
-    elements_after  = p_list->size - index;
-    head            = p_list->head;
-    mask            = p_list->mask;
-    size            = p_list->size;
+    elements_after  = my_list->size - index;
+    head            = my_list->head;
+    mask            = my_list->mask;
+    size            = my_list->size;
 
     if (elements_before < elements_after) 
     {
         /* Move preceding elements one position to the left. */
         for (i = 0; i < elements_before; ++i)
         {
-            p_list->p_table[(head + i - 1) & mask] =
-            p_list->p_table[(head + i) & mask];
+            my_list->p_table[(head + i - 1) & mask] =
+            my_list->p_table[(head + i) & mask];
         }
 
         head = (head - 1) & mask;
-        p_list->p_table[(head + index) & mask] = p_element;
-        p_list->head = head;
+        my_list->p_table[(head + index) & mask] = element;
+        my_list->head = head;
     }
     else
     {
         /* Move the following elements one position to the right. */
         for (i = 0; i < elements_after; ++i)
         {
-            p_list->p_table[(head + size - i) & mask] =
-            p_list->p_table[(head + size - i - 1) & mask];
+            my_list->p_table[(head + size - i) & mask] =
+            my_list->p_table[(head + size - i - 1) & mask];
         }
 
-        p_list->p_table[(head + index) & mask] = p_element;
+        my_list->p_table[(head + index) & mask] = element;
     }
 
-    p_list->size++;
+    my_list->size++;
     return true;
 }
 
-size_t list_t_size(list_t* p_list) 
+size_t list_size(list* my_list) 
 {
-    return p_list ? p_list->size : 0;
+    return my_list ? my_list->size : 0;
 }
 
-void* list_t_get(list_t* p_list, size_t index)
+void* list_get(list* my_list, size_t index)
 {
-    if (!p_list)               return NULL;
-    if (index >= p_list->size) return NULL;
-
-    return p_list->p_table[(p_list->head + index) & p_list->mask];
+    if (!my_list)               
+    {
+        return NULL;
+    }
+    
+    if (index >= my_list->size) 
+    {
+        return NULL;
+    }
+    
+    return my_list->p_table[(my_list->head + index) & my_list->mask];
 }
 
-void* list_t_set(list_t* p_list, size_t index, void* p_new_value) 
-{
-    void* p_ret;
-
-    if (!p_list)               return NULL;
-    if (index >= p_list->size) return NULL;
-
-    p_ret = p_list->p_table[(p_list->head + index) & p_list->mask];
-    p_list->p_table[(p_list->head + index) & p_list->mask] = p_new_value;
-    return p_ret;
-}
-
-void* list_t_pop_front(list_t* p_list)
+void* list_set(list* my_list, size_t index, void* p_new_value) 
 {
     void* p_ret;
 
-    if (!p_list)           return NULL;   
-    if (p_list->size == 0) return NULL;
-
-    p_ret = p_list->p_table[p_list->head];
-    p_list->head = (p_list->head + 1) & p_list->mask;
-    p_list->size--;
+    if (!my_list)      
+    {
+        return NULL;
+    }
+    
+    if (index >= my_list->size) 
+    {
+        return NULL;
+    }
+    
+    p_ret = my_list->p_table[(my_list->head + index) & my_list->mask];
+    my_list->p_table[(my_list->head + index) & my_list->mask] = p_new_value;
     return p_ret;
 }
 
-void* list_t_pop_back(list_t* p_list)
+void* list_pop_front(list* my_list)
 {
     void* p_ret;
 
-    if (!p_list)           return NULL;
-    if (p_list->size == 0) return NULL;
-
-    p_ret = p_list->p_table[(p_list->head + p_list->size - 1) & p_list->mask];
-    p_list->size--;
+    if (!my_list)           
+    {
+        return NULL;   
+    }
+    
+    if (my_list->size == 0) 
+    {
+        return NULL;
+    }
+    
+    p_ret = my_list->p_table[my_list->head];
+    my_list->head = (my_list->head + 1) & my_list->mask;
+    my_list->size--;
     return p_ret;
 }
 
-void* list_t_remove_at(list_t* p_list, size_t index)
+void* list_pop_back(list* my_list)
+{
+    void* p_ret;
+
+    if (!my_list)          
+    {
+        return NULL;
+    }
+    
+    if (my_list->size == 0) 
+    {
+        return NULL;
+    }
+    
+    p_ret = my_list->p_table[(my_list->head + my_list->size - 1) & 
+                              my_list->mask];
+    my_list->size--;
+    return p_ret;
+}
+
+void* list_remove_at(list* my_list, size_t index)
 {
     void* p_ret;
     size_t head;
@@ -208,56 +275,70 @@ void* list_t_remove_at(list_t* p_list, size_t index)
     size_t i;
     size_t j;
 
-    if (!p_list)               return NULL;
-    if (index >= p_list->size) return NULL;
+    if (!my_list)               
+    {
+        return NULL;
+    }
+        
+    if (index >= my_list->size)
+    {
+        return NULL;
+    }
+    
+    head = my_list->head;
+    mask = my_list->mask;
 
-    head = p_list->head;
-    mask = p_list->mask;
-
-    p_ret = p_list->p_table[(head + index) & mask];
+    p_ret = my_list->p_table[(head + index) & mask];
 
     elements_before = index;
-    elements_after  = p_list->size - index - 1;
+    elements_after  = my_list->size - index - 1;
 
     if (elements_before < elements_after)
     {
         /* Move the preceding elements one position to the right. */
         for (j = elements_before; j > 0; --j)
         {
-            p_list->p_table[(head + j) & mask] =
-            p_list->p_table[(head + j - 1) & mask];
+            my_list->p_table[(head + j) & mask] =
+            my_list->p_table[(head + j - 1) & mask];
         }
 
-        p_list->head = (head + 1) & mask;
+        my_list->head = (head + 1) & mask;
     }
     else
     {
         /* Move the following elements one position to the left. */
         for (i = 0; i < elements_after; ++i) 
         {
-            p_list->p_table[(head + index + i) & mask] =
-            p_list->p_table[(head + index + i + 1) & mask];
+            my_list->p_table[(head + index + i) & mask] =
+            my_list->p_table[(head + index + i + 1) & mask];
         }
     }
 
-    p_list->size--;
+    my_list->size--;
     return p_ret;
 }
 
-bool list_t_contains(list_t* p_list, 
+bool list_contains(list* my_list, 
                         void* p_element,
                         bool (*p_equals_function)(void*, void*))
 {
     size_t i;
 
-    if (!p_list)            return false;
-    if (!p_equals_function) return false;
-
-    for (i = 0; i < p_list->size; ++i) 
+    if (!my_list)           
+    {
+        return false;
+    }
+    
+    if (!p_equals_function) 
+    {
+        return false;
+    }
+    
+    for (i = 0; i < my_list->size; ++i) 
     {
         if (p_equals_function(p_element, 
-                              p_list->p_table[(p_list->head + i) & 
-                              p_list->mask]))
+                              my_list->p_table[(my_list->head + i) & 
+                              my_list->mask]))
         {
             return true;
         }
@@ -266,18 +347,24 @@ bool list_t_contains(list_t* p_list,
     return false;
 }
 
-void list_t_clear(list_t* p_list)
+void list_clear(list* my_list)
 {
-    if (!p_list) return;
-
-    p_list->head = 0;
-    p_list->size = 0;
+    if (!my_list) 
+    {
+        return;
+    }
+    
+    my_list->head = 0;
+    my_list->size = 0;
 }
 
-void list_t_free(list_t* p_list)
+void list_free(list* my_list)
 {
-    if (!p_list) return;
-
-    free(p_list->p_table);
-    free(p_list);
+    if (!my_list) 
+    {
+        return;
+    }
+    
+    free(my_list->p_table);
+    free(my_list);
 }

@@ -43,8 +43,8 @@ static heap_node* fibonacci_heap_node_alloc(void* element, void* priority) {
     node->left     = node;
     node->right    = node;
     node->child    = NULL;
-    node->degree     = 0U;
-    node->marked     = false;
+    node->degree   = 0U;
+    node->marked   = false;
 
     return node;
 }
@@ -506,31 +506,6 @@ int fibonacci_heap_size(fibonacci_heap* heap)
     }
 
     return unordered_map_t_size(heap->node_map);
-}
-
-static void clear_nodes_impl(heap_node* node)
-{
-    heap_node* child;
-    heap_node* next_sibling;
-
-//    child = node->child;
-//
-//    if (child) 
-//    {
-//        while (true) 
-//        {
-//            next_sibling = child->right;
-//            clear_nodes_impl(child);
-//            child = next_sibling;
-//
-//            if (!child)
-//            {
-//                break;
-//            }
-//        }
-//    }
-
-//    free(node);
 }
 
 void fibonacci_heap_clear(fibonacci_heap* heap)

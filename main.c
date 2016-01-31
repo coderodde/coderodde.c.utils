@@ -839,127 +839,127 @@ static bool int_eq(void* a, void* b)
 static void test_list_correctness()
 {
     size_t i;
-    list_t* p_list = list_t_alloc(10);
+    list* p_list = list_alloc(10);
     
     for (i = 0; i < 40; i++) 
     {
-        ASSERT(list_t_push_back(p_list, 2 * i));
+        ASSERT(list_push_back(p_list, 2 * i));
     }
     
-    ASSERT(list_t_size(p_list) == 40);
+    ASSERT(list_size(p_list) == 40);
     
     for (i = 0; i < 40; ++i) 
     {
-        ASSERT((size_t) list_t_get(p_list, i) == 2 * i);
+        ASSERT((size_t) list_get(p_list, i) == 2 * i);
     }
     
     for (i = 0; i < 40; ++i) 
     {
-        ASSERT(list_t_size(p_list) > 0);
-        ASSERT((size_t) list_t_pop_front(p_list) == 2 * i);
+        ASSERT(list_size(p_list) > 0);
+        ASSERT((size_t) list_pop_front(p_list) == 2 * i);
     }
     
-    ASSERT(list_t_size(p_list) == 0);
+    ASSERT(list_size(p_list) == 0);
     
     for (i = 200; i > 0; --i) 
     {
-        ASSERT(list_t_push_front(p_list, i));
+        ASSERT(list_push_front(p_list, i));
     }
     
-    ASSERT(list_t_size(p_list) == 200);
+    ASSERT(list_size(p_list) == 200);
     
     for (i = 200; i > 0; --i) 
     {
-        ASSERT((size_t) list_t_pop_back(p_list) == i);
+        ASSERT((size_t) list_pop_back(p_list) == i);
     }
     
-    ASSERT(list_t_size(p_list) == 0);
+    ASSERT(list_size(p_list) == 0);
     
-    ASSERT(list_t_insert(p_list, 0, 0));
-    ASSERT(list_t_insert(p_list, 1, 1));
-    ASSERT(list_t_insert(p_list, 0, 2));
+    ASSERT(list_insert(p_list, 0, 0));
+    ASSERT(list_insert(p_list, 1, 1));
+    ASSERT(list_insert(p_list, 0, 2));
     
-    ASSERT((size_t) list_t_get(p_list, 0) == 2);
-    ASSERT((size_t) list_t_get(p_list, 1) == 0);
-    ASSERT((size_t) list_t_get(p_list, 2) == 1);
+    ASSERT((size_t) list_get(p_list, 0) == 2);
+    ASSERT((size_t) list_get(p_list, 1) == 0);
+    ASSERT((size_t) list_get(p_list, 2) == 1);
     
     /* <2, 0, 1> */
-    ASSERT(list_t_insert(p_list, 0, 10));
+    ASSERT(list_insert(p_list, 0, 10));
     /* <10, 2, 0, 1> */
-    ASSERT(list_t_insert(p_list, 4, 11));
+    ASSERT(list_insert(p_list, 4, 11));
     /* <10, 2, 0, 1, 11> */
-    ASSERT(list_t_insert(p_list, 2, 12));
+    ASSERT(list_insert(p_list, 2, 12));
     /* <10, 2, 12, 0, 1, 11> */
-    ASSERT(list_t_insert(p_list, 3, 14));
+    ASSERT(list_insert(p_list, 3, 14));
     /* <10, 2, 12, 14, 0, 1, 11> */
     
-    ASSERT((size_t) list_t_get(p_list, 0) == 10);
-    ASSERT((size_t) list_t_get(p_list, 1) == 2);
-    ASSERT((size_t) list_t_get(p_list, 2) == 12);
-    ASSERT((size_t) list_t_get(p_list, 3) == 14);
-    ASSERT((size_t) list_t_get(p_list, 4) == 0);
-    ASSERT((size_t) list_t_get(p_list, 5) == 1);
-    ASSERT((size_t) list_t_get(p_list, 6) == 11);
+    ASSERT((size_t) list_get(p_list, 0) == 10);
+    ASSERT((size_t) list_get(p_list, 1) == 2);
+    ASSERT((size_t) list_get(p_list, 2) == 12);
+    ASSERT((size_t) list_get(p_list, 3) == 14);
+    ASSERT((size_t) list_get(p_list, 4) == 0);
+    ASSERT((size_t) list_get(p_list, 5) == 1);
+    ASSERT((size_t) list_get(p_list, 6) == 11);
     
-    ASSERT((size_t) list_t_set(p_list, 5, 100) == 1);
-    ASSERT((size_t) list_t_get(p_list, 5) == 100);
+    ASSERT((size_t) list_set(p_list, 5, 100) == 1);
+    ASSERT((size_t) list_get(p_list, 5) == 100);
     
-    ASSERT(list_t_size(p_list) == 7);
+    ASSERT(list_size(p_list) == 7);
     
-    ASSERT(list_t_contains(p_list,  10,  int_eq));
-    ASSERT(list_t_contains(p_list,  2,   int_eq));
-    ASSERT(list_t_contains(p_list,  12,  int_eq));
-    ASSERT(list_t_contains(p_list,  14,  int_eq));
-    ASSERT(list_t_contains(p_list,  0,   int_eq));
-    ASSERT(list_t_contains(p_list,  100, int_eq));
-    ASSERT(list_t_contains(p_list,  11,  int_eq));
-    ASSERT(!list_t_contains(p_list, 15,  int_eq));
-    ASSERT(!list_t_contains(p_list, 16,  int_eq));
+    ASSERT(list_contains(p_list,  10,  int_eq));
+    ASSERT(list_contains(p_list,  2,   int_eq));
+    ASSERT(list_contains(p_list,  12,  int_eq));
+    ASSERT(list_contains(p_list,  14,  int_eq));
+    ASSERT(list_contains(p_list,  0,   int_eq));
+    ASSERT(list_contains(p_list,  100, int_eq));
+    ASSERT(list_contains(p_list,  11,  int_eq));
+    ASSERT(!list_contains(p_list, 15,  int_eq));
+    ASSERT(!list_contains(p_list, 16,  int_eq));
     
-    ASSERT(list_t_size(p_list) == 7);
+    ASSERT(list_size(p_list) == 7);
     
     /* <10, 2, 12, 14, 0, 100, 11*/
-    ASSERT(list_t_remove_at(p_list, 4) == 0);
+    ASSERT(list_remove_at(p_list, 4) == 0);
     /* <10, 2, 12, 14, 100, 11> */
-    ASSERT((int) list_t_remove_at(p_list, 4) == 100);
+    ASSERT((int) list_remove_at(p_list, 4) == 100);
     /* <10, 2, 12, 14, 11> */
-    ASSERT((int) list_t_remove_at(p_list, 4) == 11);
+    ASSERT((int) list_remove_at(p_list, 4) == 11);
     /* <10, 2, 12, 14> */
-    ASSERT((int) list_t_remove_at(p_list, 0) == 10);
+    ASSERT((int) list_remove_at(p_list, 0) == 10);
     /* <2, 12, 14> */
-    ASSERT(list_t_remove_at(p_list, 4) == NULL);
-    ASSERT(list_t_remove_at(p_list, 3) == NULL);
+    ASSERT(list_remove_at(p_list, 4) == NULL);
+    ASSERT(list_remove_at(p_list, 3) == NULL);
     /* <2, 12, 14> */
-    ASSERT((int) list_t_remove_at(p_list, 1) == 12);
+    ASSERT((int) list_remove_at(p_list, 1) == 12);
     /* <2, 14> */
-    ASSERT((int) list_t_remove_at(p_list, 1) == 14);
+    ASSERT((int) list_remove_at(p_list, 1) == 14);
     /* <2> */
-    ASSERT((int) list_t_remove_at(p_list, 0) == 2);
+    ASSERT((int) list_remove_at(p_list, 0) == 2);
     
-    ASSERT(list_t_size(p_list) == 0);
+    ASSERT(list_size(p_list) == 0);
     
     for (i = 0; i < 5; ++i) 
     {
-        ASSERT(list_t_push_front(p_list, 2 * i + 1));
+        ASSERT(list_push_front(p_list, 2 * i + 1));
     }
     
-    ASSERT((int) list_t_remove_at(p_list, 2) == 5);
-    ASSERT((int) list_t_pop_front(p_list) == 9);
-    ASSERT((int) list_t_pop_back(p_list) == 1);
-    ASSERT((int) list_t_pop_front(p_list) == 7);
-    ASSERT((int) list_t_pop_back(p_list) == 3);
+    ASSERT((int) list_remove_at(p_list, 2) == 5);
+    ASSERT((int) list_pop_front(p_list) == 9);
+    ASSERT((int) list_pop_back(p_list) == 1);
+    ASSERT((int) list_pop_front(p_list) == 7);
+    ASSERT((int) list_pop_back(p_list) == 3);
     
-    list_t_insert(p_list, 0, 1);
-    list_t_insert(p_list, 0, 2);
+    list_insert(p_list, 0, 1);
+    list_insert(p_list, 0, 2);
     
-    ASSERT(list_t_size(p_list) == 2);
-    list_t_clear(p_list);
-    ASSERT(list_t_size(p_list) == 0);
+    ASSERT(list_size(p_list) == 2);
+    list_clear(p_list);
+    ASSERT(list_size(p_list) == 0);
 }
 
 static void test_list_performance()
 {
-    list_t* p_list = list_t_alloc(10);
+    list* p_list = list_alloc(10);
     const int sz = 1000000;
     
     clock_t t;
@@ -982,12 +982,12 @@ static void test_list_performance()
     
     for (i = 0; i < sz / 2; ++i) 
     {
-        ASSERT(list_t_push_front(p_list, sz / 2 - i - 1));
+        ASSERT(list_push_front(p_list, sz / 2 - i - 1));
     }
     
     for (i = sz / 2; i < sz; ++i) 
     {
-        ASSERT(list_t_push_back(p_list, i));
+        ASSERT(list_push_back(p_list, i));
     }
     
     duration += ((double) clock() - t);
@@ -996,7 +996,7 @@ static void test_list_performance()
 
     for (i = 0; i < sz; ++i) 
     {
-        ASSERT((int) list_t_get(p_list, i) == i);
+        ASSERT((int) list_get(p_list, i) == i);
     }
     
     duration += ((double) clock() - t);
@@ -1005,14 +1005,13 @@ static void test_list_performance()
     
     for (i = 0; i < sz; ++i)
     {
-        ASSERT((int) list_t_pop_front(p_list) == i);
+        ASSERT((int) list_pop_front(p_list) == i);
     }
     
     duration += ((double) clock() - t);
     
     printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);        
 }
-
 
 static void test_fibonacci_heap_correctness() 
 {
@@ -1153,21 +1152,21 @@ int main(int argc, char** argv) {
     test_list_correctness();
     test_list_performance();
     
-    test_unordered_map_correctness();
-    test_unordered_map_performance();
-    
-    test_unordered_set_correctness();
-    test_unordered_set_performance();
-    
-    test_map_correctness();
-    test_map_performance();
-    
-    test_set_correctness();
-    test_set_performance();
-    
-    test_heap_correctness();
-    test_heap_performance();
-    
+//    test_unordered_map_correctness();
+//    test_unordered_map_performance();
+//    
+//    test_unordered_set_correctness();
+//    test_unordered_set_performance();
+//    
+//    test_map_correctness();
+//    test_map_performance();
+//    
+//    test_set_correctness();
+//    test_set_performance();
+//    
+//    test_heap_correctness();
+//    test_heap_performance();
+//    
     test_fibonacci_heap_correctness();
     test_fibonacci_heap_performance(); 
     
