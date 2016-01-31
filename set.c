@@ -17,12 +17,12 @@ typedef struct set_t {
     size_t         mod_count;
 } set_t;
 
-typedef struct set_iterator_t {
+struct set_iterator_t {
     set_t*       p_set;
     set_entry_t* p_next;
     size_t       iterated_count;
     size_t       expected_mod_count;
-} set_iterator_t;
+};
     
 /*******************************************************************************
 * Creates a new set entry and initializes its fields.                          *

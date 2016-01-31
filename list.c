@@ -2,13 +2,13 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef struct list_t {
+struct list_t {
     void** p_table;
     size_t size;
     size_t capacity;
     size_t head;
     size_t mask;
-} list_t;
+};
 
 static const size_t MINIMUM_CAPACITY = 16;
 

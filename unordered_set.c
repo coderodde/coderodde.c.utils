@@ -23,12 +23,12 @@ typedef struct unordered_set_t {
     float                   load_factor;
 } unordered_set_t;
 
-typedef struct unordered_set_iterator_t {
+struct unordered_set_iterator_t {
     unordered_set_t*       p_map;
     unordered_set_entry_t* p_next_entry;
     size_t                 iterated_count;
     size_t                 expected_mod_count;
-} unordered_set_iterator_t;
+};
 
 static unordered_set_entry_t* unordered_set_entry_t_alloc(void* p_key)
 {

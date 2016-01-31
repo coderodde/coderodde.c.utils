@@ -116,7 +116,7 @@ static void test_map_performance()
         
         if (value != 3 * array[i]) 
         {
-            printf("Key: %d, value: %d, index: %d, map size: %d, "
+            printf("Key: %d, value: %d, index: %d, map size: %u, "
                    "contains: %d.\n",
                     array[i], 
                     value, 
@@ -1015,93 +1015,93 @@ static void test_list_performance()
 
 static void test_fibonacci_heap_correctness() 
 {
-    fibonacci_heap_t* p_heap;
+    fibonacci_heap* p_heap;
     size_t i;
-    p_heap = fibonacci_heap_t_alloc(10, 
+    p_heap = fibonacci_heap_alloc(10, 
                                     1.0f, 
                                     hash_function, 
                                     equals_function, 
                                     priority_cmp);
     
-    ASSERT(fibonacci_heap_t_is_healthy(p_heap));
+    ASSERT(fibonacci_heap_is_healthy(p_heap));
     
     for (i = 0; i < 30; ++i) 
     {
-        ASSERT(fibonacci_heap_t_add(p_heap, i, 30 - i));
+        ASSERT(fibonacci_heap_add(p_heap, i, 30 - i));
     }
     
     for (i = 0; i < 30; ++i)
     {
-        ASSERT(!fibonacci_heap_t_add(p_heap, i, i));
+        ASSERT(!fibonacci_heap_add(p_heap, i, i));
     }
     
-    ASSERT(fibonacci_heap_t_size(p_heap) == 30);
+    ASSERT(fibonacci_heap_size(p_heap) == 30);
     
     for (i = 0; i < 30; ++i) 
     {
-        ASSERT(fibonacci_heap_t_contains_key(p_heap, i));
+        ASSERT(fibonacci_heap_contains_key(p_heap, i));
     }
     
     for (i = 30; i < 40; ++i) 
     {
-        ASSERT(fibonacci_heap_t_contains_key(p_heap, i) == false);
+        ASSERT(fibonacci_heap_contains_key(p_heap, i) == false);
     }
     
-    ASSERT(fibonacci_heap_t_is_healthy(p_heap));
+    ASSERT(fibonacci_heap_is_healthy(p_heap));
     
     for (i = 29; i != (size_t) -1; --i) 
     {
-        ASSERT(fibonacci_heap_t_extract_min(p_heap) == i);
+        ASSERT(fibonacci_heap_extract_min(p_heap) == i);
     }
     
-    ASSERT(fibonacci_heap_t_size(p_heap) == 0);
-    ASSERT(fibonacci_heap_t_is_healthy(p_heap));
+    ASSERT(fibonacci_heap_size(p_heap) == 0);
+    ASSERT(fibonacci_heap_is_healthy(p_heap));
     
     for (i = 10; i < 100; ++i) 
     {
-        ASSERT(fibonacci_heap_t_add(p_heap, i, i));
+        ASSERT(fibonacci_heap_add(p_heap, i, i));
     }
     
-    ASSERT(fibonacci_heap_t_decrease_key(p_heap, 50, 0));
+    ASSERT(fibonacci_heap_decrease_key(p_heap, 50, 0));
     
-    ASSERT(fibonacci_heap_t_min(p_heap) == 50);
-    ASSERT(fibonacci_heap_t_extract_min(p_heap) == 50);
+    ASSERT(fibonacci_heap_min(p_heap) == 50);
+    ASSERT(fibonacci_heap_extract_min(p_heap) == 50);
     
     for (i = 10; i < 50; ++i) 
     {
-        ASSERT(fibonacci_heap_t_min(p_heap) == i);
-        ASSERT(fibonacci_heap_t_extract_min(p_heap) == i);
+        ASSERT(fibonacci_heap_min(p_heap) == i);
+        ASSERT(fibonacci_heap_extract_min(p_heap) == i);
     }
     
     for (i = 51; i < 100; ++i) 
     {
-        ASSERT(fibonacci_heap_t_min(p_heap) == i);
-        ASSERT(fibonacci_heap_t_extract_min(p_heap) == i);
+        ASSERT(fibonacci_heap_min(p_heap) == i);
+        ASSERT(fibonacci_heap_extract_min(p_heap) == i);
     }
     
-    ASSERT(fibonacci_heap_t_min(p_heap) == NULL);
-    ASSERT(fibonacci_heap_t_extract_min(p_heap) == NULL);
+    ASSERT(fibonacci_heap_min(p_heap) == NULL);
+    ASSERT(fibonacci_heap_extract_min(p_heap) == NULL);
     
     for (i = 20; i < 40; ++i) 
     {
-        ASSERT(fibonacci_heap_t_add(p_heap, i, i));
+        ASSERT(fibonacci_heap_add(p_heap, i, i));
     }
     
-    ASSERT(fibonacci_heap_t_size(p_heap) == 20);
+    ASSERT(fibonacci_heap_size(p_heap) == 20);
     
-    fibonacci_heap_t_clear(p_heap);
+    fibonacci_heap_clear(p_heap);
     
-    ASSERT(fibonacci_heap_t_size(p_heap) == 0);
+    ASSERT(fibonacci_heap_size(p_heap) == 0);
     
     for (i = 0; i < 100; ++i) 
     {
-        ASSERT(fibonacci_heap_t_contains_key(p_heap, i) == false);
+        ASSERT(fibonacci_heap_contains_key(p_heap, i) == false);
     }
 }
 
 static void test_fibonacci_heap_performance()
 {
-    fibonacci_heap_t* p_heap;
+    fibonacci_heap* p_heap;
     size_t i;
     clock_t t;
     const size_t sz = 1000000;
@@ -1110,7 +1110,7 @@ static void test_fibonacci_heap_performance()
     puts("--- PERFORMANCE OF fibonacci_heap_t ---");
     
     duration = 0.0;
-    p_heap = fibonacci_heap_t_alloc(10,
+    p_heap = fibonacci_heap_alloc(10,
                                     1.0f,
                                     hash_function,
                                     equals_function,
@@ -1119,27 +1119,27 @@ static void test_fibonacci_heap_performance()
 
     for (i = 0; i < sz; ++i) 
     {
-        fibonacci_heap_t_add(p_heap, i, 500000 + sz - i);
+        fibonacci_heap_add(p_heap, i, 500000 + sz - i);
     }
 
     /* State: 999999, 999998, 999997, ... */
-    ASSERT(fibonacci_heap_t_is_healthy(p_heap));
+    ASSERT(fibonacci_heap_is_healthy(p_heap));
 
     for (i = sz / 2; i < sz; ++i)
     {
-        fibonacci_heap_t_decrease_key(p_heap, i, i);
+        fibonacci_heap_decrease_key(p_heap, i, i);
     }
 
-    ASSERT(fibonacci_heap_t_is_healthy(p_heap));
+    ASSERT(fibonacci_heap_is_healthy(p_heap));
 
     for (i = 0; i < sz; ++i)
     {
-        fibonacci_heap_t_extract_min(p_heap);
+        fibonacci_heap_extract_min(p_heap);
     }
 
     duration += ((double) clock() - t);
 
-    fibonacci_heap_t_free(p_heap);
+    fibonacci_heap_free(p_heap);
 
     printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);
 }

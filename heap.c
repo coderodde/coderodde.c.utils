@@ -8,7 +8,7 @@ typedef struct heap_node_t {
     size_t index;
 } heap_node_t;
 
-typedef struct heap_t {
+struct heap_t {
     unordered_map_t* p_node_map;
     heap_node_t**    p_table;
     size_t         (*p_hash_function)(void*);
@@ -18,7 +18,7 @@ typedef struct heap_t {
     size_t           capacity;
     size_t           degree;
     size_t*          p_indices;
-} heap_t;
+};
 
 static heap_node_t* heap_node_t_alloc(void* p_element, void* p_priority) 
 {
