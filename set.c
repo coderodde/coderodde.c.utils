@@ -2,53 +2,56 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-typedef struct set_entry_t {
-    void*               p_element;
-    struct set_entry_t* p_left;
-    struct set_entry_t* p_right;
-    struct set_entry_t* p_parent;
-    int                 height;
-} set_entry_t;
+typedef struct set_entry {
+    void*             element;
+    struct set_entry* left;
+    struct set_entry* right;
+    struct set_entry* parent;
+    int               height;
+} set_entry;
 
-struct set_t {
-    set_entry_t*   p_root;
-    int          (*p_comparator)(void*, void*);
-    size_t         size;
-    size_t         mod_count;
+struct set {
+    set_entry*   root;
+    int        (*comparator)(void*, void*);
+    size_t       size;
+    size_t       mod_count;
 };
 
-struct set_iterator_t {
-    set_t*       p_set;
-    set_entry_t* p_next;
-    size_t       iterated_count;
-    size_t       expected_mod_count;
+struct set_iterator {
+    set*       owner_set;
+    set_entry* next;
+    size_t     iterated_count;
+    size_t     expected_mod_count;
 };
     
 /*******************************************************************************
 * Creates a new set entry and initializes its fields.                          *
 *******************************************************************************/  
-static set_entry_t* set_entry_t_alloc(void* p_element) 
+static set_entry* set_entry_alloc(void* element) 
 {
-    set_entry_t* p_ret = malloc(sizeof(*p_ret));
+    set_entry* entry = malloc(sizeof(*entry));
 
-    if (!p_ret) return NULL;
+    if (!entry) 
+    {
+        return NULL;
+    }
+    
+    entry->element = element;
+    entry->left    = NULL;
+    entry->right   = NULL;
+    entry->parent  = NULL;
+    entry->height  = 0;
 
-    p_ret->p_element    = p_element;
-    p_ret->p_left   = NULL;
-    p_ret->p_right  = NULL;
-    p_ret->p_parent = NULL;
-    p_ret->height   = 0;
-
-    return p_ret;
+    return entry;
 }
 
 /*******************************************************************************
 * Returns the height of an entry. The height of a non-existent entry is        *
 * assumed to be -1.                                                            *
 *******************************************************************************/
-static int height(set_entry_t* p_node) 
+static int height(set_entry* entry) 
 {
-    return p_node ? p_node->height : -1;
+    return entry ? entry->height : -1;
 }
 
 /*******************************************************************************
@@ -62,63 +65,67 @@ static int max(int a, int b)
 /*******************************************************************************
 * Performs a left rotation and returns the new root of a (sub)tree.            *
 *******************************************************************************/
-static set_entry_t* left_rotate(set_entry_t* p_node_1)
+static set_entry* left_rotate(set_entry* node_1)
 {
-    set_entry_t* p_node_2 = p_node_1->p_right;
-    p_node_2->p_parent   = p_node_1->p_parent;
-    p_node_1->p_parent   = p_node_2;
-    p_node_1->p_right    = p_node_2->p_left;
-    p_node_2->p_left     = p_node_1;
+    set_entry* node_2 = node_1->right;
+    node_2->parent    = node_1->parent;
+    node_1->parent    = node_2;
+    node_1->right     = node_2->left;
+    node_2->left      = node_1;
 
-    if (p_node_1->p_right) p_node_1->p_right->p_parent = p_node_1;
-
-    p_node_1->height = max(height(p_node_1->p_left), 
-                           height(p_node_1->p_right)) + 1;
-    p_node_2->height = max(height(p_node_2->p_left),
-                           height(p_node_2->p_right)) + 1;
-    return p_node_2;
+    if (node_1->right) 
+    {
+        node_1->right->parent = node_1;
+    }
+    
+    node_1->height = max(height(node_1->left), height(node_1->right)) + 1;
+    node_2->height = max(height(node_2->left), height(node_2->right)) + 1;
+    
+    return node_2;
 }
 
 /*******************************************************************************
 * Performs a right rotation and returns the new root of a (sub)tree.           *
 *******************************************************************************/
-static set_entry_t* right_rotate(set_entry_t* p_node_1)
+static set_entry* right_rotate(set_entry* node_1)
 {
-    set_entry_t* p_node_2 = p_node_1->p_left;
-    p_node_2->p_parent   = p_node_1->p_parent;
-    p_node_1->p_parent   = p_node_2;
-    p_node_1->p_left     = p_node_2->p_right;
-    p_node_2->p_right    = p_node_1;
+    set_entry* node_2 = node_1->left;
+    node_2->parent   = node_1->parent;
+    node_1->parent   = node_2;
+    node_1->left     = node_2->right;
+    node_2->right    = node_1;
 
-    if (p_node_1->p_left) p_node_1->p_left->p_parent = p_node_1;
-
-    p_node_1->height = max(height(p_node_1->p_left),
-                           height(p_node_1->p_right)) + 1;
-    p_node_2->height = max(height(p_node_2->p_left),
-                           height(p_node_2->p_right)) + 1;
-    return p_node_2;
+    if (node_1->left)
+    {
+        node_1->left->parent = node_1;
+    }
+    
+    node_1->height = max(height(node_1->left), height(node_1->right)) + 1;
+    node_2->height = max(height(node_2->left), height(node_2->right)) + 1;
+    
+    return node_2;
 }
 
 /*******************************************************************************
 * Performs a right rotation following by a left rotation and returns the root  *
 * of the new (sub)tree.                                                        * 
 *******************************************************************************/
-static set_entry_t* right_left_rotate(set_entry_t* p_node_1) 
+static set_entry* right_left_rotate(set_entry* node_1) 
 {
-    set_entry_t* p_node_2 = p_node_1->p_right;
-    p_node_1->p_right = right_rotate(p_node_2);
-    return left_rotate(p_node_1);
+    set_entry* node_2 = node_1->right;
+    node_1->right = right_rotate(node_2);
+    return left_rotate(node_1);
 }
 
 /*******************************************************************************
 * Performs a left rotation following by a right rotation and returns the root  *
 * of the new (sub)tree.                                                        * 
 *******************************************************************************/
-static set_entry_t* left_right_rotate(set_entry_t* p_node_1)
+static set_entry* left_right_rotate(set_entry* node_1)
 {
-    set_entry_t* p_node_2 = p_node_1->p_left;
-    p_node_1->p_left = left_rotate(p_node_2);
-    return right_rotate(p_node_1);
+    set_entry* node_2 = node_1->left;
+    node_1->left = left_rotate(node_2);
+    return right_rotate(node_1);
 }
 
 /*******************************************************************************
@@ -129,324 +136,428 @@ static set_entry_t* left_right_rotate(set_entry_t* p_node_1)
 * only one rotation. If 'insertion_mode' is off, the last operation was        *
 * removal and we need to go up until the root node.                            *
 *******************************************************************************/  
-static void fix_after_modification(set_t* p_set, 
-                                   set_entry_t* p_entry,
+static void fix_after_modification(set* my_set, 
+                                   set_entry* entry,
                                    bool insertion_mode)
 {
-    set_entry_t* p_parent = p_entry->p_parent;
-    set_entry_t* p_grand_parent;
-    set_entry_t* p_sub_tree;
+    set_entry* parent = entry->parent;
+    set_entry* grand_parent;
+    set_entry* sub_tree;
 
-    while (p_parent) 
+    while (parent) 
     {
-        if (height(p_parent->p_left) == height(p_parent->p_right) + 2)
+        if (height(parent->left) == height(parent->right) + 2)
         {
-            p_grand_parent = p_parent->p_parent;
+            grand_parent = parent->parent;
 
-            if (height(p_parent->p_left->p_left) > 
-                height(p_parent->p_left->p_right)) 
-                p_sub_tree = right_rotate(p_parent);
-            else 
-                p_sub_tree = left_right_rotate(p_parent);
-
-            if (!p_grand_parent) 
-                p_set->p_root = p_sub_tree;
-            else if (p_grand_parent->p_left == p_parent) 
-                p_grand_parent->p_left = p_sub_tree;
+            if (height(parent->left->left) > height(parent->left->right)) 
+            {
+                sub_tree = right_rotate(parent);
+            }
             else
-                p_grand_parent->p_right = p_sub_tree;
+            {
+                sub_tree = left_right_rotate(parent);
+            }
 
-            if (p_grand_parent)
-                p_grand_parent->height = 
-                        max(height(p_grand_parent->p_left),
-                                   height(p_grand_parent->p_right)) + 1;
+            if (!grand_parent)
+            {
+                my_set->root = sub_tree;
+            }
+            else if (grand_parent->left == parent) 
+            {
+                grand_parent->left = sub_tree;
+            }
+            else
+            {
+                grand_parent->right = sub_tree;
+            }
+                
+            if (grand_parent)
+            {
+                grand_parent->height = 
+                        max(height(grand_parent->left),
+                                   height(grand_parent->right)) + 1;
+            }
 
             /* Fixing after insertion requires only one rotation. */
-            if (insertion_mode) return;
+            if (insertion_mode)
+            {
+                return;
+            }
         }
-
-        if (height(p_parent->p_right) == height(p_parent->p_left) + 2) 
+        else if (height(parent->right) == height(parent->left) + 2) 
         {
-            p_grand_parent = p_parent->p_parent;
+            grand_parent = parent->parent;
 
-            if (height(p_parent->p_right->p_right) > 
-                height(p_parent->p_right->p_left)) 
-                p_sub_tree = left_rotate(p_parent);
+            if (height(parent->right->right) > height(parent->right->left)) 
+            {
+                sub_tree = left_rotate(parent);
+            }
             else
-                p_sub_tree = right_left_rotate(p_parent);
-
-            if (!p_grand_parent)
-                p_set->p_root = p_sub_tree;
-            else if (p_grand_parent->p_left == p_parent)
-                p_grand_parent->p_left = p_sub_tree;
+            {
+                sub_tree = right_left_rotate(parent);
+            }
+            
+            if (!grand_parent)
+            {
+                my_set->root = sub_tree;
+            }
+            else if (grand_parent->left == parent)
+            {
+                grand_parent->left = sub_tree;
+            }
+            
             else
-                p_grand_parent->p_right = p_sub_tree;
-
-            if (p_grand_parent)
-                p_grand_parent->height = 
-                        max(height(p_grand_parent->p_left),
-                            height(p_grand_parent->p_right)) + 1;
+            {
+                grand_parent->right = sub_tree;
+            }
+                
+            if (grand_parent)
+            {
+                grand_parent->height = 
+                        max(height(grand_parent->left),
+                            height(grand_parent->right)) + 1;
+            }
 
             /* Fixing after insertion requires only one rotation. */
-            if (insertion_mode) return;
+            if (insertion_mode)
+            {
+                return;
+            }
         }
 
-        p_parent->height = max(height(p_parent->p_left),
-                               height(p_parent->p_right)) + 1;
-        p_parent = p_parent->p_parent;
+        parent->height = max(height(parent->left), height(parent->right)) + 1;
+        parent = parent->parent;
     }
 }
 
 /*******************************************************************************
 * Performs the actual insertion of an entry.                                   *
 *******************************************************************************/
-static int insert(set_t* p_set, void* p_element) 
+static bool insert(set* my_set, void* element) 
 {
-    set_entry_t* p_new_entry = set_entry_t_alloc(p_element);
-    set_entry_t* p_x;
-    set_entry_t* p_parent;
+    set_entry* new_entry = set_entry_alloc(element);
+    set_entry* x;
+    set_entry* parent;
 
-    if (!p_new_entry) return (EXIT_FAILURE);
-
-    if (!p_set->p_root)
+    if (!new_entry) 
     {
-        p_set->p_root = p_new_entry;
-        p_set->size++;
-        p_set->mod_count++;
-        return (EXIT_SUCCESS);
+        return false;
+    }
+    
+    if (!my_set->root)
+    {
+        my_set->root = new_entry;
+        my_set->size++;
+        my_set->mod_count++;
+        return true;
     }
 
-    p_x = p_set->p_root;
-    p_parent = NULL;
+    x = my_set->root;
+    parent = NULL;
 
-    while (p_x) 
+    while (x) 
     {
-        p_parent = p_x;
+        parent = x;
 
-        if (p_set->p_comparator(p_new_entry->p_element, p_x->p_element) < 0)
-            p_x = p_x->p_left;
+        if (my_set->comparator(new_entry->element, x->element) < 0)
+        {
+            x = x->left;
+        }
         else
-            p_x = p_x->p_right;
+        {
+            x = x->right;
+        }
     }
 
-    p_new_entry->p_parent = p_parent;
+    new_entry->parent = parent;
 
-    if (p_set->p_comparator(p_new_entry->p_element, p_parent->p_element) < 0) 
-        p_parent->p_left = p_new_entry;
+    if (my_set->comparator(new_entry->element, parent->element) < 0) 
+    {
+        parent->left = new_entry;
+    }
     else
-        p_parent->p_right = p_new_entry;
+    {
+        parent->right = new_entry;
+    }
 
     /** 'true' means we choose the insertion mode for fixing the tree. */
-    fix_after_modification(p_set, p_new_entry, true);
-    p_set->size++;
-    p_set->mod_count++;
-    return (EXIT_SUCCESS);
+    fix_after_modification(my_set, new_entry, true);
+    my_set->size++;
+    my_set->mod_count++;
+    
+    return true;
 }
 
 /*******************************************************************************
 * Returns the minimum entry of a subtree rooted at 'p_entry'.                  *
 *******************************************************************************/  
-static set_entry_t* min_entry(set_entry_t* p_entry)
+static set_entry* min_entry(set_entry* entry)
 {
-    while (p_entry->p_left) p_entry = p_entry->p_left;
-    return p_entry;
+    while (entry->left)
+    {
+        entry = entry->left;
+    }
+    
+    return entry;
 }
 
 /*******************************************************************************
 * Returns the successor entry as specified by the order implied by the         *
 * comparator.                                                                  *
 *******************************************************************************/
-static set_entry_t* get_successor_entry(set_entry_t* p_entry)
+static set_entry* get_successor_entry(set_entry* entry)
 {
-    set_entry_t* p_parent;
+    set_entry* parent;
 
-    if (p_entry->p_right) return min_entry(p_entry->p_right);
-
-    p_parent = p_entry->p_parent;
-
-    while (p_parent && p_parent->p_right == p_entry)
+    if (entry->right)
     {
-        p_entry = p_parent;
-        p_parent = p_parent->p_parent;
+        return min_entry(entry->right);
+    }
+    
+    parent = entry->parent;
+
+    while (parent && parent->right == entry)
+    {
+        entry = parent;
+        parent = parent->parent;
     }
 
-    return p_parent;
+    return parent;
 }
 
 /*******************************************************************************
 * This routine is responsible for removing entries from the tree.              *
 *******************************************************************************/  
-static set_entry_t* delete_entry(set_t* p_set, set_entry_t* p_entry)
+static set_entry* delete_entry(set* my_set, set_entry* entry)
 {
-    set_entry_t* p_parent;
-    set_entry_t* p_child;
-    set_entry_t* p_successor;
+    set_entry* parent;
+    set_entry* child;
+    set_entry* successor;
 
     void* p_tmp_element;
 
-    if (!p_entry->p_left && !p_entry->p_right)
+    if (!entry->left && !entry->right)
     {
         /** The node to delete has no children. */
-        p_parent = p_entry->p_parent;
+        parent = entry->parent;
 
-        if (!p_parent) 
+        if (!parent) 
         {
-            p_set->p_root = NULL;
-            p_set->size--;
-            p_set->mod_count++;
-            return p_entry;
+            my_set->root = NULL;
+            my_set->size--;
+            my_set->mod_count++;
+            return entry;
         }
 
-        if (p_entry == p_parent->p_left) 
-            p_parent->p_left = NULL;
+        if (entry == parent->left) 
+        {
+            parent->left = NULL;
+        }
         else
-            p_parent->p_right = NULL;
+        {
+            parent->right = NULL;
+        }
 
-        p_set->size--;
-        p_set->mod_count++;
-        return p_entry;
+        my_set->size--;
+        my_set->mod_count++;
+        
+        return entry;
     }
 
-    if (!p_entry->p_left || !p_entry->p_right)
+    if (!entry->left || !entry->right)
     {
         /** The node has exactly one child. */
-        if (p_entry->p_left)
-            p_child = p_entry->p_left;
-        else
-            p_child = p_entry->p_right;
-
-        p_parent = p_entry->p_parent;
-        p_child->p_parent = p_parent;
-
-        if (!p_parent) 
+        if (entry->left)
         {
-            p_set->p_root = p_child;
-            p_set->size--;
-            p_set->mod_count++;
-            return p_entry;
+            child = entry->left;
+        }
+        else
+        {
+            child = entry->right;
+        }
+            
+        parent = entry->parent;
+        child->parent = parent;
+
+        if (!parent) 
+        {
+            my_set->root = child;
+            my_set->size--;
+            my_set->mod_count++;
+            return entry;
         }
 
-        if (p_entry == p_parent->p_left)
-            p_parent->p_left = p_child;
-        else 
-            p_parent->p_right = p_child;
-
-        p_set->size--;
-        p_set->mod_count++;
-        return p_entry;
+        if (entry == parent->left)
+        {
+            parent->left = child;
+        }
+        else
+        {
+            parent->right = child;
+        }
+            
+        my_set->size--;
+        my_set->mod_count++;
+        
+        return entry;
     }
 
     /** The node to remove has both children. */
-    p_tmp_element      = p_entry->p_element;
-    p_successor        = min_entry(p_entry->p_right);
-    p_entry->p_element = p_successor->p_element;
-    p_child            = p_successor->p_right;
-    p_parent           = p_successor->p_parent;
+    p_tmp_element  = entry->element;
+    successor      = min_entry(entry->right);
+    entry->element = successor->element;
+    child          = successor->right;
+    parent         = successor->parent;
 
-    if (p_parent->p_left == p_successor)
-        p_parent->p_left = p_child;
+    if (parent->left == successor)
+    {
+        parent->left = child;
+    }
     else
-        p_parent->p_right = p_child;
-
-    if (p_child)
-        p_child->p_parent = p_parent;
-
-    p_set->size--;
-    p_set->mod_count++;
-    p_successor->p_element = p_tmp_element;
-    return p_successor;
+    {
+        parent->right = child;
+    }
+        
+    if (child)
+    {
+        child->parent = parent;
+    }
+        
+    my_set->size--;
+    my_set->mod_count++;
+    successor->element = p_tmp_element;
+    
+    return successor;
 }
 
 /*******************************************************************************
 * Searches for an entry with key 'key'. Returns NULL if there is no such.      *
 *******************************************************************************/  
-static set_entry_t* find_entry(set_t* p_set, void* element)
+static set_entry* find_entry(set* my_set, void* element)
 {
-    set_entry_t* p_entry = p_set->p_root;
+    set_entry* entry = my_set->root;
 
-    while (p_entry && p_set->p_comparator(element, p_entry->p_element) != 0)
+    while (entry && my_set->comparator(element, entry->element) != 0)
     {
-        if (p_set->p_comparator(element, p_entry->p_element) < 0)
-            p_entry = p_entry->p_left;
-        else 
-            p_entry = p_entry->p_right;
+        if (my_set->comparator(element, entry->element) < 0)
+        {
+            entry = entry->left;
+        }
+        else
+        {
+            entry = entry->right;
+        }
     }
 
-    return p_entry;
+    return entry;
 }
 
-set_t* set_t_alloc(int (*p_comparator)(void*, void*)) 
+set* set_alloc(int (*comparator)(void*, void*)) 
 {
-    set_t* p_ret;
+    set* my_set;
 
-    if (!p_comparator) return NULL;
-
-    p_ret = malloc(sizeof(*p_ret));
-
-    if (!p_ret) return NULL;
-
-    p_ret->p_root = NULL;
-    p_ret->p_comparator = p_comparator;
-    p_ret->size = 0;
-    p_ret->mod_count = 0;
-
-    return p_ret;
-}
-
-bool set_t_add(set_t* p_set, void* p_element)
-{
-    set_entry_t* p_target;
-    void* p_old_value;
-
-    if (!p_set)                       return false;
-    if (find_entry(p_set, p_element)) return false;
+    if (!comparator) 
+    {
+        return NULL;
+    }
     
-    insert(p_set, p_element);
-    return true;
+    my_set = malloc(sizeof(*my_set));
+
+    if (!my_set) 
+    {
+        return NULL;
+    }
+    
+    my_set->root = NULL;
+    my_set->comparator = comparator;
+    my_set->size = 0;
+    my_set->mod_count = 0;
+
+    return my_set;
 }
 
-bool set_t_contains(set_t* p_set, void* p_element)
+bool set_add(set* my_set, void* element)
 {
-    if (!p_set) return false;
-
-    return find_entry(p_set, p_element) ? true : false;
+    if (!my_set)            
+    {
+        return false;
+    }
+    
+    if (find_entry(my_set, element))
+    {
+        return false;
+    }
+    
+    return insert(my_set, element);
 }
 
-bool set_t_remove(set_t* p_set, void* p_element)
+bool set_contains(set* my_set, void* element)
 {
-    set_entry_t* p_entry;
+    if (!my_set)
+    {
+        return false;
+    }
+    
+    return find_entry(my_set, element) ? true : false;
+}
 
-    if (!p_set) return false;
+bool set_remove(set* my_set, void* element)
+{
+    set_entry* entry;
 
-    p_entry = find_entry(p_set, p_element);
+    if (!my_set) 
+    {
+        return false;
+    }
+    
+    entry = find_entry(my_set, element);
 
-    if (!p_entry) return false;
-
-    p_entry = delete_entry(p_set, p_entry);
-    fix_after_modification(p_set, p_entry, false);
-    free(p_entry);
+    if (!entry) 
+    {
+        return false;
+    }
+    
+    entry = delete_entry(my_set, entry);
+    fix_after_modification(my_set, entry, false);
+    free(entry);
     return true;
 }
 
 /*******************************************************************************
 * This routine implements the actual checking of tree balance.                 *
 *******************************************************************************/  
-static bool check_balance_factors_impl(set_entry_t* p_entry)
+static bool check_balance_factors_impl(set_entry* entry)
 {
-    if (!p_entry) return true;
-    if (abs(height(p_entry->p_left) - 
-            height(p_entry->p_right)) > 1)             return false;
-    if (!check_balance_factors_impl(p_entry->p_left))  return false;
-    if (!check_balance_factors_impl(p_entry->p_right)) return false;
+    if (!entry)
+    {
+        return true;
+    }
+        
+    if (abs(height(entry->left) - height(entry->right)) > 1)        
+    {
+        return false;
+    }
+        
+    if (!check_balance_factors_impl(entry->left)) 
+    {
+        return false;
+    }
+    
+    if (!check_balance_factors_impl(entry->right)) 
+    {
+        return false;
+    }
+    
     return true;
 }
 
 /*******************************************************************************
 * Checks that every node in the map is balanced.                               *
 *******************************************************************************/  
-static int check_balance_factors(set_t* p_set) 
+static int check_balance_factors(set* my_set) 
 {
-    return check_balance_factors_impl(p_set->p_root);
+    return check_balance_factors_impl(my_set->root);
 }
 
 /*******************************************************************************
@@ -454,7 +565,7 @@ static int check_balance_factors(set_t* p_set)
 * sentinel value of -2 for denoting the fact that a current subtree contains   *
 * at least one unbalanced node.                                                *  
 *******************************************************************************/  
-static int check_heights_impl(set_entry_t* p_entry)
+static int check_heights_impl(set_entry* entry)
 {
     int height_left;
     int height_right;
@@ -463,19 +574,31 @@ static int check_heights_impl(set_entry_t* p_entry)
     /**********************************************************
     * The base case: the height of a non-existent leaf is -1. *
     **********************************************************/ 
-    if (!p_entry) return -1;
+    if (!entry) 
+    {
+        return -1;
+    }
+    
+    height_left = check_heights_impl(entry->left) + 1;
 
-    height_left = check_heights_impl(p_entry->p_left) + 1;
+    if (height_left == -2) 
+    {
+        return -2;
+    }
+    
+    height_right = check_heights_impl(entry->right) + 1;
 
-    if (height_left == -2) return -2;
-
-    height_right = check_heights_impl(p_entry->p_right) + 1;
-
-    if (height_right == -2)  return -2;
-
+    if (height_right == -2)  
+    {
+        return -2;
+    }
+    
     if ((height_both = max(height_left, 
-                           height_right)) != p_entry->height) return -2;
-
+                           height_right)) != entry->height) 
+    {
+        return -2;
+    }
+    
     return height_both;
 }
 
@@ -483,102 +606,152 @@ static int check_heights_impl(set_entry_t* p_entry)
 * This routine checks that the height field of each map entry (node) is        *
 * correct.                                                                     *
 *******************************************************************************/  
-static int check_heights(set_t* p_set)
+static int check_heights(set* my_set)
 {
-    return check_heights_impl(p_set->p_root) != -2;
+    return check_heights_impl(my_set->root) != -2;
 }
 
-bool set_t_is_healthy(set_t* p_set) 
+bool set_is_healthy(set* my_set) 
 {
-    if (!p_set)                return false;
-    if (!check_heights(p_set)) return false;
-    return check_balance_factors(p_set);
+    if (!my_set)              
+    {
+        return false;
+    }
+        
+    if (!check_heights(my_set)) 
+    {
+        return false;
+    }
+        
+    return check_balance_factors(my_set);
 }
 
 /*******************************************************************************
 * Implements the actual deallocation of the tree entries by traversing the     *
 * tree in post-order.                                                          * 
 *******************************************************************************/  
-static void set_free_impl(set_entry_t* p_entry)
+static void set_free_impl(set_entry* entry)
 {
-    if (!p_entry) return;
-
-    set_free_impl(p_entry->p_left);
-    set_free_impl(p_entry->p_right);
-    free(p_entry);
-}
-
-void set_t_free(set_t* p_set) 
-{
-    if (!p_set)         return;
-    if (!p_set->p_root) return;
-
-    set_free_impl(p_set->p_root);
-    free(p_set);
-}
-
-void set_t_clear(set_t* p_set) 
-{
-    if (!p_set)         return;
-    if (!p_set->p_root) return;
-
-    set_free_impl(p_set->p_root);
-    p_set->mod_count += p_set->size;
-    p_set->p_root = NULL;
-    p_set->size = 0;
-}
-
-size_t set_t_size(set_t* p_set) 
-{
-    return p_set ? p_set->size : 0;
-}
-
-set_iterator_t* set_iterator_t_alloc(set_t* p_set)
-{
-    set_iterator_t* p_iterator;
+    if (!entry)
+    {
+        return;
+    }
     
-    if (!p_set) return NULL;
-    
-    p_iterator = malloc(sizeof(*p_iterator));
-    p_iterator->expected_mod_count = p_set->mod_count;
-    p_iterator->iterated_count = 0;
-    p_iterator->p_set = p_set;
-    p_iterator->p_next = p_set->p_root ? min_entry(p_set->p_root) : NULL;
-    return p_iterator;
+    set_free_impl(entry->left);
+    set_free_impl(entry->right);
+    free(entry);
 }
 
-size_t set_iterator_t_has_next(set_iterator_t* p_iterator) 
+void set_free(set* my_set) 
 {
-    if (!p_iterator) return 0;
+    if (!my_set)       
+    {
+        return;
+    }
+    
+    if (!my_set->root)
+    {
+        return;
+    }
+    
+    set_free_impl(my_set->root);
+    free(my_set);
+}
 
+void set_clear(set* my_set) 
+{
+    if (!my_set)        
+    {
+        return;
+    }
+    
+    if (!my_set->root) 
+    {
+        return;
+    }
+    
+    set_free_impl(my_set->root);
+    my_set->mod_count += my_set->size;
+    my_set->root = NULL;
+    my_set->size = 0;
+}
+
+size_t set_size(set* my_set) 
+{
+    return my_set ? my_set->size : 0;
+}
+
+set_iterator* set_iterator_alloc(set* my_set)
+{
+    set_iterator* iterator;
+    
+    if (!my_set) 
+    {
+        return NULL;
+    }
+    
+    iterator = malloc(sizeof(*iterator));
+    iterator->expected_mod_count = my_set->mod_count;
+    iterator->iterated_count = 0;
+    iterator->owner_set = my_set;
+    iterator->next = my_set->root ? min_entry(my_set->root) : NULL;
+    
+    return iterator;
+}
+
+size_t set_iterator_has_next(set_iterator* iterator) 
+{
+    if (!iterator) 
+    {
+        return 0;
+    }
+    
     /** If the map was modified, stop iteration. */
-    if (set_iterator_t_is_disturbed(p_iterator)) return 0;
-
-    return p_iterator->p_set->size - p_iterator->iterated_count;
+    if (set_iterator_is_disturbed(iterator)) 
+    {
+        return 0;
+    }
+    
+    return iterator->owner_set->size - iterator->iterated_count;
 }
 
-bool set_iterator_t_next(set_iterator_t* p_iterator, void** pp_element)
+bool set_iterator_next(set_iterator* iterator, void** element_pointer)
 {
-    if (!p_iterator)                             return false;
-    if (!p_iterator->p_next)                     return false;
-    if (set_iterator_t_is_disturbed(p_iterator)) return false;
-
-    *pp_element   = p_iterator->p_next->p_element;
-    p_iterator->iterated_count++;
-    p_iterator->p_next = get_successor_entry(p_iterator->p_next);
+    if (!iterator)                           
+    {
+        return false;
+    }
+        
+    if (!iterator->next)      
+    {
+        return false;
+    }
+    
+    if (set_iterator_is_disturbed(iterator)) 
+    {
+        return false;
+    } 
+    
+    *element_pointer = iterator->next->element;
+    iterator->iterated_count++;
+    iterator->next = get_successor_entry(iterator->next);
+    
     return true;
 }
 
-bool set_iterator_t_is_disturbed(set_iterator_t* p_iterator) 
+bool set_iterator_is_disturbed(set_iterator* iterator) 
 {
-    if (!p_iterator) return false;
-
-    return p_iterator->expected_mod_count != p_iterator->p_set->mod_count;
+    if (!iterator) 
+    {
+        return false;
+    }
+    
+    return iterator->expected_mod_count != iterator->owner_set->mod_count;
 }
 
-void set_iterator_t_free(set_iterator_t* p_iterator) 
+void set_iterator_free(set_iterator* iterator) 
 {
-    p_iterator->p_set  = NULL;
-    p_iterator->p_next = NULL;
-    free(p_iterator);
+    iterator->owner_set  = NULL;
+    iterator->next = NULL;
+    free(iterator);
 }

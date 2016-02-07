@@ -244,7 +244,7 @@ static void fix_after_modification(map* p_map,
 /*******************************************************************************
 * Performs the actual insertion of an entry.                                   *
 *******************************************************************************/
-static int insert(map* my_map, void* key, void* value) 
+static void insert(map* my_map, void* key, void* value) 
 {
     map_entry* new_entry = map_entry_t_alloc(key, value);
     map_entry* x;
@@ -252,7 +252,7 @@ static int insert(map* my_map, void* key, void* value)
 
     if (!new_entry)
     {
-        return (EXIT_FAILURE);
+        return;
     }
     
     if (!my_map->root)
@@ -261,7 +261,7 @@ static int insert(map* my_map, void* key, void* value)
         my_map->size++;
         my_map->mod_count++;
         
-        return (EXIT_SUCCESS);
+        return;
     }
 
     x = my_map->root;
@@ -296,8 +296,6 @@ static int insert(map* my_map, void* key, void* value)
     fix_after_modification(my_map, new_entry, true);
     my_map->size++;
     my_map->mod_count++;
-    
-    return (EXIT_SUCCESS);
 }
 
 /*******************************************************************************
@@ -515,7 +513,6 @@ void* map_put(map* my_map, void* key, void* value)
     } 
 
     insert(my_map, key, value);
-    
     return NULL;
 }
 

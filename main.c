@@ -48,7 +48,7 @@ static void test_map_performance()
     int seed;
     int* array = malloc(sizeof(int) * sz);
  
-    puts("--- PERFORMANCE OF map_t ---");
+    puts("--- PERFORMANCE OF map ---");
     
     for (i = 0; i < sz; ++i) 
         array[i] = i;
@@ -174,7 +174,7 @@ static void test_unordered_map_performance()
     int seed;
     int* array = malloc(sizeof(int) * sz);
  
-    puts("--- PERFORMANCE OF unordered_map_t ---");
+    puts("--- PERFORMANCE OF unordered_map ---");
     
     for (i = 0; i < sz; ++i) 
         array[i] = i;
@@ -282,8 +282,8 @@ static void test_unordered_map_performance()
 
 static void test_set_performance()
 {
-    set_t* p_set = set_t_alloc(int_comparator);
-    set_iterator_t* p_iterator;
+    set* p_set = set_alloc(int_comparator);
+    set_iterator* p_iterator;
     
     const int sz = 1000000;
     
@@ -298,7 +298,7 @@ static void test_set_performance()
     int seed;
     int* array = malloc(sizeof(int) * sz);
  
-    puts("--- PERFORMANCE OF set_t ---");
+    puts("--- PERFORMANCE OF set ---");
     
     for (i = 0; i < sz; ++i) 
         array[i] = i;
@@ -321,21 +321,21 @@ static void test_set_performance()
     
     for (i = 0; i < sz; ++i)
     {
-        set_t_add(p_set, (void*) array[i]);
+        set_add(p_set, (void*) array[i]);
     }
     
     duration += ((double) clock() - t);
     
-    printf("Healthy: %d\n", set_t_is_healthy(p_set));
+    printf("Healthy: %d\n", set_is_healthy(p_set));
     
-    p_iterator = set_iterator_t_alloc(p_set);
+    p_iterator = set_iterator_alloc(p_set);
     
     t = clock();
     i = 0;
     
-    while (set_iterator_t_has_next(p_iterator)) 
+    while (set_iterator_has_next(p_iterator)) 
     {
-        set_iterator_t_next(p_iterator, &p_element);
+        set_iterator_next(p_iterator, &p_element);
         
         if (i++ != (int) p_element) exit(1);
     }
@@ -346,7 +346,7 @@ static void test_set_performance()
     
     for (i = 0; i < 5; ++i) 
         for (j = 0; j < sz; ++j) 
-            if (!set_t_contains(p_set, (void*) array[i])) 
+            if (!set_contains(p_set, (void*) array[i])) 
                 exit(2);
         
     duration += ((double) clock() - t);
@@ -355,7 +355,7 @@ static void test_set_performance()
     
     for (i = 0; i < sz; ++i) 
     {
-        if(!ASSERT(set_t_remove(p_set, (void*) array[i])))
+        if(!ASSERT(set_remove(p_set, (void*) array[i])))
         {
             printf("Fails at index %d\n", i);
             exit(3);
@@ -363,14 +363,14 @@ static void test_set_performance()
     }
     
     duration += ((double) clock() - t);
-    printf("Healthy: %d\n", set_t_is_healthy(p_set));
+    printf("Healthy: %d\n", set_is_healthy(p_set));
     
-    p_iterator = set_iterator_t_alloc(p_set);
+    p_iterator = set_iterator_alloc(p_set);
     
     /* Empty iterator. */
-    while (set_iterator_t_has_next(p_iterator)) 
+    while (set_iterator_has_next(p_iterator)) 
     {
-        set_iterator_t_next(p_iterator, &p_element);
+        set_iterator_next(p_iterator, &p_element);
     }
     
     printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);    
@@ -513,51 +513,51 @@ void test_set_correctness()
     int i;
     void* p_key;
     int expected_size;
-    set_t* p_set = set_t_alloc(int_comparator);
-    set_iterator_t* p_iterator;
+    set* p_set = set_alloc(int_comparator);
+    set_iterator* p_iterator;
     
     for (i = -10; i < 10; ++i) 
     {
-        ASSERT(set_t_contains(p_set, (void*) i) == false);
-        ASSERT(set_t_size(p_set) == (i + 10));
+        ASSERT(set_contains(p_set, (void*) i) == false);
+        ASSERT(set_size(p_set) == (i + 10));
         
-        ASSERT(set_t_add(p_set, (void*) i) == true);
+        ASSERT(set_add(p_set, (void*) i) == true);
         
-        ASSERT(set_t_contains(p_set, (void*) i) == true);
-        ASSERT(set_t_size(p_set) == (i + 10) + 1);
+        ASSERT(set_contains(p_set, (void*) i) == true);
+        ASSERT(set_size(p_set) == (i + 10) + 1);
     }
     
-    expected_size = set_t_size(p_set);
-    p_iterator = set_iterator_t_alloc(p_set);
+    expected_size = set_size(p_set);
+    p_iterator = set_iterator_alloc(p_set);
     ASSERT(expected_size == 20);
     
     for (i = -10; i < 10; ++i) 
     {
-        ASSERT(set_iterator_t_has_next(p_iterator) == 10 - i);
-        ASSERT(set_iterator_t_next(p_iterator, &p_key) == true);
+        ASSERT(set_iterator_has_next(p_iterator) == 10 - i);
+        ASSERT(set_iterator_next(p_iterator, &p_key) == true);
         ASSERT((int) p_key == i);
     }
     
-    ASSERT(set_iterator_t_has_next(p_iterator) == 0);
-    ASSERT(set_t_size(p_set) == expected_size);
+    ASSERT(set_iterator_has_next(p_iterator) == 0);
+    ASSERT(set_size(p_set) == expected_size);
     
-    set_t_clear(p_set);
+    set_clear(p_set);
     
-    ASSERT(set_t_size(p_set) == 0);
+    ASSERT(set_size(p_set) == 0);
     
-    ASSERT(set_t_add      (p_set, (void*) 1));
-    ASSERT(set_t_size     (p_set) == 1);
-    ASSERT(set_t_add      (p_set, (void*) 1) == false);
-    ASSERT(set_t_size     (p_set) == 1);
-    ASSERT(set_t_contains (p_set, (void*) 1));
-    ASSERT(set_t_contains (p_set, (void*) 2) == false);
-    
-    ASSERT(set_t_contains (p_set, (void*) 10) == false);
-    ASSERT(set_t_add      (p_set, (void*) 10));
-    ASSERT(set_t_contains (p_set, (void*) 10));
-    ASSERT(set_t_remove   (p_set, (void*) 11) == false);
-    ASSERT(set_t_remove   (p_set, (void*) 10));
-    ASSERT(set_t_contains (p_set, (void*) 10) == false);
+    ASSERT(set_add      (p_set, (void*) 1));
+    ASSERT(set_size     (p_set) == 1);
+    ASSERT(set_add      (p_set, (void*) 1) == false);
+    ASSERT(set_size     (p_set) == 1);
+    ASSERT(set_contains (p_set, (void*) 1));
+    ASSERT(set_contains (p_set, (void*) 2) == false);
+  
+    ASSERT(set_contains (p_set, (void*) 10) == false);
+    ASSERT(set_add      (p_set, (void*) 10));
+    ASSERT(set_contains (p_set, (void*) 10));
+    ASSERT(set_remove   (p_set, (void*) 11) == false);
+    ASSERT(set_remove   (p_set, (void*) 10));
+    ASSERT(set_contains (p_set, (void*) 10) == false);
     
 }
 
@@ -633,7 +633,7 @@ static void test_unordered_set_performance()
     int* array = malloc(sizeof(int) * sz);
     p_check_list = calloc(sz, sizeof(bool));
     
-    puts("--- PERFORMANCE OF unordered_set_t ---");
+    puts("--- PERFORMANCE OF unordered_set ---");
     
     for (i = 0; i < sz; ++i) 
         array[i] = i;
@@ -1190,9 +1190,9 @@ int main(int argc, char** argv) {
 //    
     test_map_correctness();
     test_map_performance();
-//    
-//    test_set_correctness();
-//    test_set_performance();
+    
+    test_set_correctness();
+    test_set_performance();
 //    
 //    test_heap_correctness();
 //    test_heap_performance();
