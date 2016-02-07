@@ -2,55 +2,58 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-typedef struct map_entry_t {
-    void*               p_key;
-    void*               p_value;
-    struct map_entry_t* p_left;
-    struct map_entry_t* p_right;
-    struct map_entry_t* p_parent;
-    int                 height;
-} map_entry_t;
+typedef struct map_entry {
+    void*             key;
+    void*             value;
+    struct map_entry* left;
+    struct map_entry* right;
+    struct map_entry* parent;
+    int               height;
+} map_entry;
 
-struct map_t {
-    map_entry_t* p_root;
-    int (*p_comparator)(void*, void*);
-    size_t size;
-    size_t mod_count;
+struct map {
+    map_entry* root;
+    int      (*comparator)(void*, void*);
+    size_t     size;
+    size_t     mod_count;
 };
 
-struct map_iterator_t {
-    map_t*       p_map;
-    map_entry_t* p_next;
-    size_t       iterated_count;
-    size_t       expected_mod_count;
+struct map_iterator {
+    map*       owner_map;
+    map_entry* next;
+    size_t     iterated_count;
+    size_t     expected_mod_count;
 };
     
 /*******************************************************************************
 * Creates a new map entry and initializes its fields.                          *
 *******************************************************************************/  
-static map_entry_t* map_entry_t_alloc(void* p_key, void* p_value) 
+static map_entry* map_entry_t_alloc(void* key, void* value) 
 {
-    map_entry_t* p_ret = malloc(sizeof(*p_ret));
+    map_entry* entry = malloc(sizeof(*entry));
 
-    if (!p_ret) return NULL;
+    if (!entry) 
+    {
+        return NULL;
+    }
+    
+    entry->key    = key;
+    entry->value  = value;
+    entry->left   = NULL;
+    entry->right  = NULL;
+    entry->parent = NULL;
+    entry->height = 0;
 
-    p_ret->p_key    = p_key;
-    p_ret->p_value  = p_value;
-    p_ret->p_left   = NULL;
-    p_ret->p_right  = NULL;
-    p_ret->p_parent = NULL;
-    p_ret->height   = 0;
-
-    return p_ret;
+    return entry;
 }
 
 /*******************************************************************************
 * Returns the height of an entry. The height of a non-existent entry is        *
 * assumed to be -1.                                                            *
 *******************************************************************************/
-static int height(map_entry_t* p_node) 
+static int height(map_entry* node) 
 {
-    return p_node ? p_node->height : -1;
+    return node ? node->height : -1;
 }
 
 /*******************************************************************************
@@ -64,63 +67,73 @@ static int max(int a, int b)
 /*******************************************************************************
 * Performs a left rotation and returns the new root of a (sub)tree.            *
 *******************************************************************************/
-static map_entry_t* left_rotate(map_entry_t* p_node_1)
+static map_entry* left_rotate(map_entry* node_1)
 {
-    map_entry_t* p_node_2 = p_node_1->p_right;
-    p_node_2->p_parent   = p_node_1->p_parent;
-    p_node_1->p_parent   = p_node_2;
-    p_node_1->p_right    = p_node_2->p_left;
-    p_node_2->p_left     = p_node_1;
+    map_entry* node_2 = node_1->right;
+    
+    node_2->parent    = node_1->parent;
+    node_1->parent    = node_2;
+    node_1->right     = node_2->left;
+    node_2->left      = node_1;
 
-    if (p_node_1->p_right) p_node_1->p_right->p_parent = p_node_1;
-
-    p_node_1->height = max(height(p_node_1->p_left), 
-                           height(p_node_1->p_right)) + 1;
-    p_node_2->height = max(height(p_node_2->p_left),
-                           height(p_node_2->p_right)) + 1;
-    return p_node_2;
+    if (node_1->right) 
+    {
+        node_1->right->parent = node_1;
+    }
+    
+    node_1->height = max(height(node_1->left), height(node_1->right)) + 1;
+    node_2->height = max(height(node_2->left), height(node_2->right)) + 1;
+    
+    return node_2;
 }
 
 /*******************************************************************************
 * Performs a right rotation and returns the new root of a (sub)tree.           *
 *******************************************************************************/
-static map_entry_t* right_rotate(map_entry_t* p_node_1)
+static map_entry* right_rotate(map_entry* node_1)
 {
-    map_entry_t* p_node_2 = p_node_1->p_left;
-    p_node_2->p_parent   = p_node_1->p_parent;
-    p_node_1->p_parent   = p_node_2;
-    p_node_1->p_left     = p_node_2->p_right;
-    p_node_2->p_right    = p_node_1;
+    map_entry* node_2 = node_1->left;
+    
+    node_2->parent   = node_1->parent;
+    node_1->parent   = node_2;
+    node_1->left     = node_2->right;
+    node_2->right    = node_1;
 
-    if (p_node_1->p_left) p_node_1->p_left->p_parent = p_node_1;
-
-    p_node_1->height = max(height(p_node_1->p_left),
-                           height(p_node_1->p_right)) + 1;
-    p_node_2->height = max(height(p_node_2->p_left),
-                           height(p_node_2->p_right)) + 1;
-    return p_node_2;
+    if (node_1->left) 
+    {
+        node_1->left->parent = node_1;
+    }
+    
+    node_1->height = max(height(node_1->left), height(node_1->right)) + 1;
+    node_2->height = max(height(node_2->left), height(node_2->right)) + 1;
+    
+    return node_2;
 }
 
 /*******************************************************************************
 * Performs a right rotation following by a left rotation and returns the root  *
 * of the new (sub)tree.                                                        * 
 *******************************************************************************/
-static map_entry_t* right_left_rotate(map_entry_t* p_node_1) 
+static map_entry* right_left_rotate(map_entry* node_1) 
 {
-    map_entry_t* p_node_2 = p_node_1->p_right;
-    p_node_1->p_right = right_rotate(p_node_2);
-    return left_rotate(p_node_1);
+    map_entry* node_2 = node_1->right;
+    
+    node_1->right = right_rotate(node_2);
+    
+    return left_rotate(node_1);
 }
 
 /*******************************************************************************
 * Performs a left rotation following by a right rotation and returns the root  *
 * of the new (sub)tree.                                                        * 
 *******************************************************************************/
-static map_entry_t* left_right_rotate(map_entry_t* p_node_1)
+static map_entry* left_right_rotate(map_entry* node_1)
 {
-    map_entry_t* p_node_2 = p_node_1->p_left;
-    p_node_1->p_left = left_rotate(p_node_2);
-    return right_rotate(p_node_1);
+    map_entry* node_2 = node_1->left;
+    
+    node_1->left = left_rotate(node_2);
+    
+    return right_rotate(node_1);
 }
 
 /*******************************************************************************
@@ -131,348 +144,464 @@ static map_entry_t* left_right_rotate(map_entry_t* p_node_1)
 * only one rotation. If 'insertion_mode' is off, the last operation was        *
 * removal and we need to go up until the root node.                            *
 *******************************************************************************/  
-static void fix_after_modification(map_t* p_map, 
-                                   map_entry_t* p_entry,
+static void fix_after_modification(map* p_map, 
+                                   map_entry* entry,
                                    bool insertion_mode)
 {
-    map_entry_t* p_parent = p_entry->p_parent;
-    map_entry_t* p_grand_parent;
-    map_entry_t* p_sub_tree;
+    map_entry* parent = entry->parent;
+    map_entry* grand_parent;
+    map_entry* sub_tree;
 
-    while (p_parent) 
+    while (parent) 
     {
-        if (height(p_parent->p_left) == height(p_parent->p_right) + 2)
+        if (height(parent->left) == height(parent->right) + 2)
         {
-            p_grand_parent = p_parent->p_parent;
+            grand_parent = parent->parent;
 
-            if (height(p_parent->p_left->p_left) > 
-                height(p_parent->p_left->p_right)) 
-                p_sub_tree = right_rotate(p_parent);
-            else 
-                p_sub_tree = left_right_rotate(p_parent);
-
-            if (!p_grand_parent) 
-                p_map->p_root = p_sub_tree;
-            else if (p_grand_parent->p_left == p_parent) 
-                p_grand_parent->p_left = p_sub_tree;
+            if (height(parent->left->left) > 
+                height(parent->left->right)) 
+            {
+                sub_tree = right_rotate(parent);
+            }
             else
-                p_grand_parent->p_right = p_sub_tree;
-
-            if (p_grand_parent)
-                p_grand_parent->height = 
-                        max(height(p_grand_parent->p_left),
-                                   height(p_grand_parent->p_right)) + 1;
+            {
+                sub_tree = left_right_rotate(parent);
+            }
+                
+            if (!grand_parent) 
+            {
+                p_map->root = sub_tree;
+            }
+            else if (grand_parent->left == parent) 
+            {
+                grand_parent->left = sub_tree;
+            }
+            else
+            {
+                grand_parent->right = sub_tree;
+            }
+             
+            if (grand_parent)
+            {
+                grand_parent->height = 
+                        max(height(grand_parent->left),
+                                   height(grand_parent->right)) + 1;
+            }   
 
             /* Fixing after insertion requires only one rotation. */
-            if (insertion_mode) return;
+            if (insertion_mode) 
+            {
+                return;
+            }
         }
-
-        if (height(p_parent->p_right) == height(p_parent->p_left) + 2) 
+        else if (height(parent->right) == height(parent->left) + 2) 
         {
-            p_grand_parent = p_parent->p_parent;
+            grand_parent = parent->parent;
 
-            if (height(p_parent->p_right->p_right) > 
-                height(p_parent->p_right->p_left)) 
-                p_sub_tree = left_rotate(p_parent);
+            if (height(parent->right->right) > 
+                height(parent->right->left)) 
+            {
+                sub_tree = left_rotate(parent);
+            }
             else
-                p_sub_tree = right_left_rotate(p_parent);
-
-            if (!p_grand_parent)
-                p_map->p_root = p_sub_tree;
-            else if (p_grand_parent->p_left == p_parent)
-                p_grand_parent->p_left = p_sub_tree;
+            {
+                sub_tree = right_left_rotate(parent);
+            }
+                
+            if (!grand_parent)
+            {
+                p_map->root = sub_tree;
+            }
+            else if (grand_parent->left == parent)
+            {
+                grand_parent->left = sub_tree;
+            }
             else
-                p_grand_parent->p_right = p_sub_tree;
-
-            if (p_grand_parent)
-                p_grand_parent->height = 
-                        max(height(p_grand_parent->p_left),
-                            height(p_grand_parent->p_right)) + 1;
+            {
+                grand_parent->right = sub_tree;
+            }
+             
+            if (grand_parent)
+            {   
+                grand_parent->height = 
+                        max(height(grand_parent->left),
+                            height(grand_parent->right)) + 1;
+            }
 
             /* Fixing after insertion requires only one rotation. */
-            if (insertion_mode) return;
+            if (insertion_mode) 
+            {
+                return;
+            }
         }
 
-        p_parent->height = max(height(p_parent->p_left),
-                               height(p_parent->p_right)) + 1;
-        p_parent = p_parent->p_parent;
+        parent->height = max(height(parent->left),
+                             height(parent->right)) + 1;
+        parent = parent->parent;
     }
 }
 
 /*******************************************************************************
 * Performs the actual insertion of an entry.                                   *
 *******************************************************************************/
-static int insert(map_t* p_map, void* p_key, void* p_value) 
+static int insert(map* my_map, void* key, void* value) 
 {
-    map_entry_t* p_new_entry = map_entry_t_alloc(p_key, p_value);
-    map_entry_t* p_x;
-    map_entry_t* p_parent;
+    map_entry* new_entry = map_entry_t_alloc(key, value);
+    map_entry* x;
+    map_entry* parent;
 
-    if (!p_new_entry) return (EXIT_FAILURE);
-
-    if (!p_map->p_root)
+    if (!new_entry)
     {
-        p_map->p_root = p_new_entry;
-        p_map->size++;
-        p_map->mod_count++;
+        return (EXIT_FAILURE);
+    }
+    
+    if (!my_map->root)
+    {
+        my_map->root = new_entry;
+        my_map->size++;
+        my_map->mod_count++;
+        
         return (EXIT_SUCCESS);
     }
 
-    p_x = p_map->p_root;
-    p_parent = NULL;
+    x = my_map->root;
+    parent = NULL;
 
-    while (p_x) 
+    while (x) 
     {
-        p_parent = p_x;
+        parent = x;
 
-        if (p_map->p_comparator(p_new_entry->p_key, p_x->p_key) < 0)
-            p_x = p_x->p_left;
+        if (my_map->comparator(new_entry->key, x->key) < 0)
+        {
+            x = x->left;
+        }
         else
-            p_x = p_x->p_right;
+        {
+            x = x->right;
+        }
     }
 
-    p_new_entry->p_parent = p_parent;
+    new_entry->parent = parent;
 
-    if (p_map->p_comparator(p_new_entry->p_key, p_parent->p_key) < 0) 
-        p_parent->p_left = p_new_entry;
+    if (my_map->comparator(new_entry->key, parent->key) < 0) 
+    {
+        parent->left = new_entry;
+    }
     else
-        p_parent->p_right = p_new_entry;
+    {
+        parent->right = new_entry;
+    }
 
     /** TRUE means we choose the insertion mode for fixing the tree. */
-    fix_after_modification(p_map, p_new_entry, true);
-    p_map->size++;
-    p_map->mod_count++;
+    fix_after_modification(my_map, new_entry, true);
+    my_map->size++;
+    my_map->mod_count++;
+    
     return (EXIT_SUCCESS);
 }
 
 /*******************************************************************************
 * Returns the minimum entry of a subtree rooted at 'p_entry'.                  *
 *******************************************************************************/  
-static map_entry_t* min_entry(map_entry_t* p_entry)
+static map_entry* min_entry(map_entry* entry)
 {
-    while (p_entry->p_left) p_entry = p_entry->p_left;
-    return p_entry;
+    while (entry->left) 
+    {
+        entry = entry->left;
+    }
+    
+    return entry;
 }
 
 /*******************************************************************************
 * Returns the successor entry as specified by the order implied by the         *
 * comparator.                                                                  *
 *******************************************************************************/
-static map_entry_t* get_successor_entry(map_entry_t* p_entry)
+static map_entry* get_successor_entry(map_entry* entry)
 {
-    map_entry_t* p_parent;
+    map_entry* parent;
 
-    if (p_entry->p_right) return min_entry(p_entry->p_right);
-
-    p_parent = p_entry->p_parent;
-
-    while (p_parent && p_parent->p_right == p_entry)
+    if (entry->right) 
     {
-        p_entry = p_parent;
-        p_parent = p_parent->p_parent;
+        return min_entry(entry->right);
+    }
+    
+    parent = entry->parent;
+
+    while (parent && parent->right == entry)
+    {
+        entry = parent;
+        parent = parent->parent;
     }
 
-    return p_parent;
+    return parent;
 }
 
 /*******************************************************************************
 * This routine is responsible for removing entries from the tree.              *
 *******************************************************************************/  
-static map_entry_t* delete_entry(map_t* p_map, map_entry_t* p_entry)
+static map_entry* delete_entry(map* my_map, map_entry* entry)
 {
-    map_entry_t* p_parent;
-    map_entry_t* p_child;
-    map_entry_t* p_successor;
+    map_entry* parent;
+    map_entry* child;
+    map_entry* successor;
 
-    void* p_tmp_key;
-    void* p_tmp_value;
+    void* tmp_key;
+    void* tmp_value;
 
-    if (!p_entry->p_left && !p_entry->p_right)
+    if (!entry->left && !entry->right)
     {
         /** The node to delete has no children. */
-        p_parent = p_entry->p_parent;
+        parent = entry->parent;
 
-        if (!p_parent) 
+        if (!parent) 
         {
-            p_map->p_root = NULL;
-            p_map->size--;
-            p_map->mod_count++;
-            return p_entry;
+            my_map->root = NULL;
+            my_map->size--;
+            my_map->mod_count++;
+            
+            return entry;
         }
 
-        if (p_entry == p_parent->p_left) 
-            p_parent->p_left = NULL;
+        if (entry == parent->left) 
+        {
+            parent->left = NULL;
+        }
         else
-            p_parent->p_right = NULL;
+        {
+            parent->right = NULL;
+        }
 
-        p_map->size--;
-        p_map->mod_count++;
-        return p_entry;
+        my_map->size--;
+        my_map->mod_count++;
+        
+        return entry;
     }
 
-    if (!p_entry->p_left || !p_entry->p_right)
+    if (!entry->left || !entry->right)
     {
         /** The node has exactly one child. */
-        if (p_entry->p_left)
-            p_child = p_entry->p_left;
-        else
-            p_child = p_entry->p_right;
-
-        p_parent = p_entry->p_parent;
-        p_child->p_parent = p_parent;
-
-        if (!p_parent) 
+        if (entry->left)
         {
-            p_map->p_root = p_child;
-            p_map->size--;
-            p_map->mod_count++;
-            return p_entry;
+            child = entry->left;
+        }
+        else
+        {
+            child = entry->right;
         }
 
-        if (p_entry == p_parent->p_left)
-            p_parent->p_left = p_child;
-        else 
-            p_parent->p_right = p_child;
+        parent = entry->parent;
+        child->parent = parent;
 
-        p_map->size--;
-        p_map->mod_count++;
-        return p_entry;
+        if (!parent) 
+        {
+            my_map->root = child;
+            my_map->size--;
+            my_map->mod_count++;
+            
+            return entry;
+        }
+
+        if (entry == parent->left)
+        {
+            parent->left = child;
+        }
+        else 
+        {
+            parent->right = child;
+        }
+
+        my_map->size--;
+        my_map->mod_count++;
+        
+        return entry;
     }
 
     /** The node to remove has both children. */
-    p_tmp_key        = p_entry->p_key;
-    p_tmp_value      = p_entry->p_value;
-    p_successor      = min_entry(p_entry->p_right);
-    p_entry->p_key   = p_successor->p_key;
-    p_entry->p_value = p_successor->p_value;
-    p_child          = p_successor->p_right;
-    p_parent         = p_successor->p_parent;
+    tmp_key        = entry->key;
+    tmp_value      = entry->value;
+    successor      = min_entry(entry->right);
+    entry->key     = successor->key;
+    entry->value   = successor->value;
+    child          = successor->right;
+    parent         = successor->parent;
 
-    if (p_parent->p_left == p_successor)
-        p_parent->p_left = p_child;
+    if (parent->left == successor)
+    {
+        parent->left = child;
+    }   
     else
-        p_parent->p_right = p_child;
-
-    if (p_child)
-        p_child->p_parent = p_parent;
-
-    p_map->size--;
-    p_map->mod_count++;
-    p_successor->p_key   = p_tmp_key;
-    p_successor->p_value = p_tmp_value;
-    return p_successor;
+    {
+        parent->right = child;
+    }
+ 
+    if (child)
+    {
+        child->parent = parent;
+    }
+        
+    my_map->size--;
+    my_map->mod_count++;
+    successor->key   = tmp_key;
+    successor->value = tmp_value;
+    
+    return successor;
 }
 
 /*******************************************************************************
 * Searches for an entry with key 'key'. Returns NULL if there is no such.      *
 *******************************************************************************/  
-static map_entry_t* find_entry(map_t* p_map, void* key)
+static map_entry* find_entry(map* my_map, void* key)
 {
-    map_entry_t* p_entry = p_map->p_root;
+    map_entry* p_entry = my_map->root;
 
-    while (p_entry && p_map->p_comparator(key, p_entry->p_key) != 0)
+    while (p_entry && my_map->comparator(key, p_entry->key) != 0)
     {
-        if (p_map->p_comparator(key, p_entry->p_key) < 0)
-            p_entry = p_entry->p_left;
-        else 
-            p_entry = p_entry->p_right;
+        if (my_map->comparator(key, p_entry->key) < 0)
+        {
+            p_entry = p_entry->left;
+        }
+        else
+        {
+            p_entry = p_entry->right;
+        }
     }
 
     return p_entry;
 }
 
-map_t* map_t_alloc(int (*p_comparator)(void*, void*)) 
+map* map_alloc(int (*comparator)(void*, void*)) 
 {
-    map_t* p_ret;
+    map* my_map;
 
-    if (!p_comparator) return NULL;
+    if (!comparator) 
+    {
+        return NULL;
+    }
+    
+    my_map = malloc(sizeof(*my_map));
 
-    p_ret = malloc(sizeof(*p_ret));
+    if (!my_map) 
+    {
+        return NULL;
+    }
+    
+    my_map->root = NULL;
+    my_map->comparator = comparator;
+    my_map->size = 0;
+    my_map->mod_count = 0;
 
-    if (!p_ret) return NULL;
-
-    p_ret->p_root = NULL;
-    p_ret->p_comparator = p_comparator;
-    p_ret->size = 0;
-    p_ret->mod_count = 0;
-
-    return p_ret;
+    return my_map;
 }
 
-void* map_t_put(map_t* p_map, void* p_key, void* p_value)
+void* map_put(map* my_map, void* key, void* value)
 {
-    map_entry_t* p_target;
-    void* p_old_value;
+    map_entry* target;
+    void* old_value;
 
-    if (!p_map) return NULL;
-
-    p_target = find_entry(p_map, p_key);
-
-    if (p_target)
+    if (!my_map) 
     {
-        p_old_value = p_target->p_value;
-        p_target->p_value = p_value;
-        return p_old_value; 
+        return NULL;
+    }
+    
+    target = find_entry(my_map, key);
+
+    if (target)
+    {
+        old_value = target->value;
+        target->value = value;
+        
+        return old_value; 
     } 
 
-    insert(p_map, p_key, p_value);
+    insert(my_map, key, value);
+    
     return NULL;
 }
 
-bool map_t_contains_key (map_t* p_map, void* p_key)
+bool map_contains_key (map* my_map, void* key)
 {
-    if (!p_map) return false;
+    if (!my_map) 
+    {
+        return false;
+    }
 
-    return find_entry(p_map, p_key);
+    return find_entry(my_map, key);
 }
 
-void* map_t_get(map_t* p_map, void* p_key)
+void* map_get(map* my_map, void* key)
 {
-    map_entry_t* p_entry;
+    map_entry* entry;
 
-    if (!p_map) return NULL;
-
-    p_entry = find_entry(p_map, p_key);
-    return p_entry ? p_entry->p_value : NULL;
+    if (!my_map) 
+    {
+        return NULL;
+    }
+    
+    entry = find_entry(my_map, key);
+    
+    return entry ? entry->value : NULL;
 }
 
-void* map_t_remove(map_t* p_map, void* p_key)
+void* map_remove(map* my_map, void* key)
 {
-    void* ret;
-    map_entry_t* p_entry;
+    void* value;
+    map_entry* entry;
 
-    if (!p_map) return NULL;
+    if (!my_map) 
+    {
+        return NULL;
+    }
+    
+    entry = find_entry(my_map, key);
 
-    p_entry = find_entry(p_map, p_key);
-
-    if (!p_entry) return NULL;
-
-    ret = p_entry->p_value;
-    p_entry = delete_entry(p_map, p_entry);
-    fix_after_modification(p_map, p_entry, false);
-    free(p_entry);
-    return ret;
+    if (!entry) 
+    {
+        return NULL;
+    }
+    
+    value = entry->value;
+    entry = delete_entry(my_map, entry);
+    fix_after_modification(my_map, entry, false);
+    free(entry);
+    
+    return value;
 }
 
 /*******************************************************************************
 * This routine implements the actual checking of tree balance.                 *
 *******************************************************************************/  
-static bool check_balance_factors_impl(map_entry_t* p_entry)
+static bool check_balance_factors_impl(map_entry* entry)
 {
-    if (!p_entry) return true;
-    if (abs(height(p_entry->p_left) - 
-            height(p_entry->p_right)) > 1)             return false;
-    if (!check_balance_factors_impl(p_entry->p_left))  return false;
-    if (!check_balance_factors_impl(p_entry->p_right)) return false;
+    if (!entry) 
+    {
+        return true;
+    }
+    
+    if (abs(height(entry->left) - height(entry->right)) > 1)        
+    {
+        return false;
+    }
+    
+    if (!check_balance_factors_impl(entry->left)) 
+    {
+        return false;
+    }
+    
+    if (!check_balance_factors_impl(entry->right)) 
+    {
+        return false;
+    }
+    
     return true;
 }
 
 /*******************************************************************************
 * Checks that every node in the map is balanced.                               *
 *******************************************************************************/  
-static int check_balance_factors(map_t* p_map) 
+static int check_balance_factors(map* my_map) 
 {
-    return check_balance_factors_impl(p_map->p_root);
+    return check_balance_factors_impl(my_map->root);
 }
 
 /*******************************************************************************
@@ -480,7 +609,7 @@ static int check_balance_factors(map_t* p_map)
 * sentinel value of -2 for denoting the fact that a current subtree contains   *
 * at least one unbalanced node.                                                *  
 *******************************************************************************/  
-static int check_heights_impl(map_entry_t* p_entry)
+static int check_heights_impl(map_entry* entry)
 {
     int height_left;
     int height_right;
@@ -489,19 +618,31 @@ static int check_heights_impl(map_entry_t* p_entry)
     /**********************************************************
     * The base case: the height of a non-existent leaf is -1. *
     **********************************************************/ 
-    if (!p_entry) return -1;
+    if (!entry)
+    {
+        return -1;
+    }
+    
+    height_left = check_heights_impl(entry->left) + 1;
 
-    height_left = check_heights_impl(p_entry->p_left) + 1;
+    if (height_left == -2)
+    {
+        return -2;
+    }
+    
+    height_right = check_heights_impl(entry->right) + 1;
 
-    if (height_left == -2) return -2;
-
-    height_right = check_heights_impl(p_entry->p_right) + 1;
-
-    if (height_right == -2)  return -2;
-
+    if (height_right == -2)
+    {
+        return -2;
+    }
+    
     if ((height_both = max(height_left, 
-                           height_right)) != p_entry->height) return -2;
-
+                           height_right)) != entry->height)
+    {
+        return -2;
+    }
+    
     return height_both;
 }
 
@@ -509,109 +650,150 @@ static int check_heights_impl(map_entry_t* p_entry)
 * This routine checks that the height field of each map entry (node) is        *
 * correct.                                                                     *
 *******************************************************************************/  
-static int check_heights(map_t* p_map)
+static int check_heights(map* my_map)
 {
-    return check_heights_impl(p_map->p_root) != -2;
+    return check_heights_impl(my_map->root) != -2;
 }
 
-bool map_t_is_healthy(map_t* p_map) 
+bool map_is_healthy(map* my_map) 
 {
-    if (!p_map) return false;
-
-    if (!check_heights(p_map)) return false;
-
-    return check_balance_factors(p_map);
+    if (!my_map) 
+    {
+        return false;
+    }
+    
+    if (!check_heights(my_map)) 
+    {
+        return false;
+    }
+    
+    return check_balance_factors(my_map);
 }
 
 /*******************************************************************************
 * Implements the actual deallocation of the tree entries by traversing the     *
 * tree in post-order.                                                          * 
 *******************************************************************************/  
-static void map_free_impl(map_entry_t* p_entry)
+static void map_free_impl(map_entry* entry)
 {
-    if (!p_entry) return;
-
-    map_free_impl(p_entry->p_left);
-    map_free_impl(p_entry->p_right);
-    free(p_entry);
-}
-
-void map_t_free(map_t* p_map) 
-{
-    if (!p_map)         return;
-    if (!p_map->p_root) return;
-
-    map_free_impl(p_map->p_root);
-    free(p_map);
-}
-
-void map_t_clear(map_t* p_map) 
-{
-    if (!p_map)         return;
-    if (!p_map->p_root) return;
-
-    map_free_impl(p_map->p_root);
-    p_map->mod_count += p_map->size;
-    p_map->p_root = NULL;
-    p_map->size = 0;
-}
-
-size_t map_t_size(map_t* p_map) 
-{
-    return p_map ? p_map->size : 0;
-}
-
-map_iterator_t* map_iterator_t_alloc(map_t* p_map)
-{
-    map_iterator_t* p_iterator;
+    if (!entry)
+    {
+        return;
+    }
     
-    if (!p_map) return NULL;
-    
-    p_iterator = malloc(sizeof(*p_iterator));
-    p_iterator->expected_mod_count = p_map->mod_count;
-    p_iterator->iterated_count = 0;
-    p_iterator->p_map = p_map;
-    p_iterator->p_next = p_map->p_root ? min_entry(p_map->p_root) : NULL;
-    return p_iterator;
+    map_free_impl(entry->left);
+    map_free_impl(entry->right);
+    free(entry);
 }
 
-size_t map_iterator_t_has_next(map_iterator_t* p_iterator) 
+void map_free(map* my_map) 
 {
-    if (!p_iterator) return 0;
+    if (!my_map || !my_map->root)      
+    {
+        return;
+    }
+    
+    map_free_impl(my_map->root);
+    free(my_map);
+}
 
+void map_clear(map* my_map) 
+{
+    if (!my_map || !my_map->root) 
+    {
+        return;
+    }
+    
+    map_free_impl(my_map->root);
+    my_map->mod_count += my_map->size;
+    my_map->root = NULL;
+    my_map->size = 0;
+}
+
+size_t map_size(map* my_map) 
+{
+    return my_map ? my_map->size : 0;
+}
+
+map_iterator* map_iterator_alloc(map* my_map)
+{
+    map_iterator* iterator;
+    
+    if (!my_map) 
+    {
+        return NULL;
+    }
+    
+    iterator = malloc(sizeof(*iterator));
+    iterator->expected_mod_count = my_map->mod_count;
+    iterator->iterated_count = 0;
+    iterator->owner_map = my_map;
+    iterator->next = my_map->root ? min_entry(my_map->root) : NULL;
+    
+    return iterator;
+}
+
+size_t map_iterator_has_next(map_iterator* iterator) 
+{
+    if (!iterator)
+    {
+        return 0;
+    }
+    
     /** If the map was modified, stop iteration. */
-    if (map_iterator_t_is_disturbed(p_iterator)) return 0;
-
-    return p_iterator->p_map->size - p_iterator->iterated_count;
+    if (map_iterator_is_disturbed(iterator)) 
+    {
+        return 0;
+    }
+    
+    return iterator->owner_map->size - iterator->iterated_count;
 }
 
-bool map_iterator_t_next(map_iterator_t* p_iterator, 
-                         void** pp_key, 
-                         void** pp_value)
+bool map_iterator_next(map_iterator* iterator, 
+                         void** key_pointer, 
+                         void** value_pointer)
 {
-    if (!p_iterator)                             return false;
-    if (!p_iterator->p_next)                     return false;
-    if (map_iterator_t_is_disturbed(p_iterator)) return false;
-
-    *pp_key   = p_iterator->p_next->p_key;
-    *pp_value = p_iterator->p_next->p_value;
-    p_iterator->iterated_count++;
-    p_iterator->p_next = get_successor_entry(p_iterator->p_next);
+    if (!iterator)    
+    {
+        return false;
+    }
+    
+    if (!iterator->next)     
+    {
+        return false;
+    }
+    
+    if (map_iterator_is_disturbed(iterator))
+    {
+        return false;
+    }
+    
+    *key_pointer   = iterator->next->key;
+    *value_pointer = iterator->next->value;
+    iterator->iterated_count++;
+    iterator->next = get_successor_entry(iterator->next);
+    
     return true;
 }
 
-bool map_iterator_t_is_disturbed(map_iterator_t* p_iterator) 
+bool map_iterator_is_disturbed(map_iterator* iterator) 
 {
-    if (!p_iterator) return false;
-
-    return p_iterator->expected_mod_count != p_iterator->p_map->mod_count;
+    if (!iterator) 
+    {
+        return false;
+    }
+    
+    return iterator->expected_mod_count != iterator->owner_map->mod_count;
 }
 
-void map_iterator_t_free(map_iterator_t* p_iterator) 
+void map_iterator_free(map_iterator* iterator) 
 {
-    if (!p_iterator) return;
+    if (!iterator) 
+    {
+        return;
+    }
     
-    p_iterator->p_map = NULL;
-    p_iterator->p_next = NULL;
-    free(p_iterator);
+    iterator->owner_map = NULL;
+    iterator->next = NULL;
+    free(iterator);
 }
