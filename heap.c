@@ -37,16 +37,15 @@ static heap_node* heap_node_alloc(void* element, void* priority)
 
 static const size_t MINIMUM_CAPACITY = 16;
 
-static int fix_degree(size_t degree) 
+static size_t fix_degree(size_t degree) 
 {
     return degree < 2 ? 2 : degree;
 }
 
 static size_t fix_initial_capacity(size_t initial_capacity) 
 {
-    return initial_capacity < MINIMUM_CAPACITY ? 
-        MINIMUM_CAPACITY : 
-        initial_capacity;
+    return initial_capacity < MINIMUM_CAPACITY ? MINIMUM_CAPACITY : 
+                                                 initial_capacity;
 }
 
 heap* heap_alloc(size_t   degree,
@@ -368,7 +367,7 @@ bool heap_decrease_key(heap* my_heap, void* element, void* priority)
     return false;
 }
 
-bool heap_contains_key(heap* my_heap, void* element)
+bool heap_contains(heap* my_heap, void* element)
 {
     if (!my_heap)
     {

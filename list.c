@@ -60,7 +60,7 @@ list* list_alloc(size_t initial_capacity)
 
 static bool ensure_capacity_before_add(list* my_list)
 {
-    void** p_new_table;
+    void** new_table;
     size_t i;
     size_t new_capacity;
 
@@ -70,21 +70,21 @@ static bool ensure_capacity_before_add(list* my_list)
     }
     
     new_capacity = 2 * my_list->capacity;
-    p_new_table  = malloc(sizeof(void*) * new_capacity);
+    new_table  = malloc(sizeof(void*) * new_capacity);
 
-    if (!p_new_table) 
+    if (!new_table) 
     {
         return false;
     }
     
     for (i = 0; i < my_list->size; ++i) 
     {
-        p_new_table[i] = my_list->storage[(my_list->head + i) & my_list->mask];
+        new_table[i] = my_list->storage[(my_list->head + i) & my_list->mask];
     }
 
     free(my_list->storage);
     
-    my_list->storage  = p_new_table;
+    my_list->storage  = new_table;
     my_list->capacity = new_capacity;
     my_list->mask     = new_capacity - 1;
     my_list->head     = 0;
@@ -207,9 +207,9 @@ void* list_get(list* my_list, size_t index)
     return my_list->storage[(my_list->head + index) & my_list->mask];
 }
 
-void* list_set(list* my_list, size_t index, void* p_new_value) 
+void* list_set(list* my_list, size_t index, void* new_value) 
 {
-    void* p_ret;
+    void* old_value;
 
     if (!my_list)      
     {
@@ -221,14 +221,14 @@ void* list_set(list* my_list, size_t index, void* p_new_value)
         return NULL;
     }
     
-    p_ret = my_list->storage[(my_list->head + index) & my_list->mask];
-    my_list->storage[(my_list->head + index) & my_list->mask] = p_new_value;
-    return p_ret;
+    old_value = my_list->storage[(my_list->head + index) & my_list->mask];
+    my_list->storage[(my_list->head + index) & my_list->mask] = new_value;
+    return old_value;
 }
 
 void* list_pop_front(list* my_list)
 {
-    void* p_ret;
+    void* front;
 
     if (!my_list)           
     {
@@ -240,15 +240,15 @@ void* list_pop_front(list* my_list)
         return NULL;
     }
     
-    p_ret = my_list->storage[my_list->head];
+    front = my_list->storage[my_list->head];
     my_list->head = (my_list->head + 1) & my_list->mask;
     my_list->size--;
-    return p_ret;
+    return front;
 }
 
 void* list_pop_back(list* my_list)
 {
-    void* p_ret;
+    void* back;
 
     if (!my_list)          
     {
@@ -260,15 +260,15 @@ void* list_pop_back(list* my_list)
         return NULL;
     }
     
-    p_ret = my_list->storage[(my_list->head + my_list->size - 1) & 
-                              my_list->mask];
+    back = my_list->storage[(my_list->head + my_list->size - 1) & 
+                             my_list->mask];
     my_list->size--;
-    return p_ret;
+    return back;
 }
 
 void* list_remove_at(list* my_list, size_t index)
 {
-    void* p_ret;
+    void* value;
     size_t head;
     size_t mask;
     size_t elements_before;
@@ -289,7 +289,7 @@ void* list_remove_at(list* my_list, size_t index)
     head = my_list->head;
     mask = my_list->mask;
 
-    p_ret = my_list->storage[(head + index) & mask];
+    value = my_list->storage[(head + index) & mask];
 
     elements_before = index;
     elements_after  = my_list->size - index - 1;
@@ -316,12 +316,12 @@ void* list_remove_at(list* my_list, size_t index)
     }
 
     my_list->size--;
-    return p_ret;
+    return value;
 }
 
 bool list_contains(list* my_list, 
-                        void* element,
-                        bool (*equals_function)(void*, void*))
+                   void* element,
+                   bool (*equals_function)(void*, void*))
 {
     size_t i;
 

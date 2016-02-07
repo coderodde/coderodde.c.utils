@@ -35,7 +35,7 @@ extern "C" {
     /***************************************************************************
     * Return true only if the element is in the heap.                          * 
     ***************************************************************************/  
-    bool heap_contains_key(heap* heap, void* element);
+    bool heap_contains(heap* heap, void* element);
 
     /***************************************************************************
     * Removes the highest priority element and returns it.                     * 

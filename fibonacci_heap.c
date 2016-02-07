@@ -1,11 +1,11 @@
 #include "fibonacci_heap.h"
 #include "unordered_map.h"
+#include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
-static const double LOG_PHI = 0.4813;
+static const double LOG_PHI = 0.438;
 static const size_t DEFAULT_NODE_ARRAY_CAPACITY = 8;
 
 typedef struct heap_node {

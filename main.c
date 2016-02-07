@@ -497,6 +497,15 @@ void test_unordered_map_correctness()
     ASSERT(unordered_map_t_remove(p_map, (void*) 10) == (void*) 30);
     ASSERT(unordered_map_t_get(p_map, (void*) 10) == 0);
     ASSERT(unordered_map_t_contains_key(p_map, (void*) 10) == false);
+    
+    
+    
+    for (i = 0; i < 10; ++i) 
+    {
+        ASSERT(unordered_map_t_put(p_map, (void*) i, (void*) i));
+    }
+    
+    unordered_map_t_free(p_map);
 }
 
 void test_set_correctness() 
@@ -549,6 +558,7 @@ void test_set_correctness()
     ASSERT(set_t_remove   (p_set, (void*) 11) == false);
     ASSERT(set_t_remove   (p_set, (void*) 10));
     ASSERT(set_t_contains (p_set, (void*) 10) == false);
+    
 }
 
 void test_unordered_set_correctness() 
@@ -718,7 +728,11 @@ static void test_heap_correctness()
     heap* p_heap;
     size_t i;
     
-    p_heap = heap_alloc(2, 10, 1.0f, hash_function, equals_function, priority_cmp);
+    p_heap = heap_alloc(2, 
+                        10, 
+                        1.0f, 
+                        hash_function, 
+                        equals_function, priority_cmp);
     
     ASSERT(heap_is_healthy(p_heap));
     
@@ -736,12 +750,12 @@ static void test_heap_correctness()
     
     for (i = 0; i < 30; ++i) 
     {
-        ASSERT(heap_contains_key(p_heap, i));
+        ASSERT(heap_contains(p_heap, i));
     }
     
     for (i = 30; i < 40; ++i) 
     {
-        ASSERT(heap_contains_key(p_heap, i) == false);
+        ASSERT(heap_contains(p_heap, i) == false);
     }
     
     ASSERT(heap_is_healthy(p_heap));
@@ -781,8 +795,8 @@ static void test_heap_correctness()
     
     ASSERT(heap_add(p_heap, 30, 30));
     ASSERT(heap_add(p_heap, 40, 40));
-    ASSERT(heap_contains_key(p_heap, 30));
-    ASSERT(heap_contains_key(p_heap, 40));
+    ASSERT(heap_contains(p_heap, 30));
+    ASSERT(heap_contains(p_heap, 40));
     ASSERT(heap_size(p_heap) == 2);
     
     heap_clear(p_heap);
@@ -966,6 +980,10 @@ static void test_list_correctness()
     ASSERT(list_size(p_list) == 2);
     list_clear(p_list);
     ASSERT(list_size(p_list) == 0);
+    ASSERT(list_push_front(p_list, 2));
+    ASSERT(list_push_front(p_list, 3));
+    ASSERT(list_push_front(p_list, 4));
+    list_free(p_list);
 }
 
 static void test_list_performance()
@@ -1161,12 +1179,12 @@ static void test_fibonacci_heap_performance()
 }
 
 int main(int argc, char** argv) {
-//    test_list_correctness();
-//    test_list_performance();
-//    
+    test_list_correctness();
+    test_list_performance();
+    
 //    test_unordered_map_correctness();
 //    test_unordered_map_performance();
-//    
+    
 //    test_unordered_set_correctness();
 //    test_unordered_set_performance();
 //    
@@ -1176,11 +1194,11 @@ int main(int argc, char** argv) {
 //    test_set_correctness();
 //    test_set_performance();
 //    
-    test_heap_correctness();
-    test_heap_performance();
-//    
-//    test_fibonacci_heap_correctness();
-//    test_fibonacci_heap_performance(); 
+//    test_heap_correctness();
+//    test_heap_performance();
+    
+    test_fibonacci_heap_correctness();
+    test_fibonacci_heap_performance(); 
     
     return (EXIT_SUCCESS);
 }
