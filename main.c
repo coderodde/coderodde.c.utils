@@ -715,74 +715,85 @@ static int priority_cmp(void* a, void* b)
 
 static void test_heap_correctness() 
 {
-    heap_t* p_heap;
+    heap* p_heap;
     size_t i;
     
-    p_heap = heap_t_alloc(2, 10, 1.0f, hash_function, equals_function, priority_cmp);
+    p_heap = heap_alloc(2, 10, 1.0f, hash_function, equals_function, priority_cmp);
     
-    ASSERT(heap_t_is_healthy(p_heap));
+    ASSERT(heap_is_healthy(p_heap));
     
     for (i = 0; i < 30; ++i) 
     {
-        ASSERT(heap_t_add(p_heap, i, 30 - i));
+        ASSERT(heap_add(p_heap, i, 30 - i));
     }
     
     for (i = 0; i < 30; ++i)
     {
-        ASSERT(!heap_t_add(p_heap, i, i));
+        ASSERT(!heap_add(p_heap, i, i));
     }
     
-    ASSERT(heap_t_size(p_heap) == 30);
+    ASSERT(heap_size(p_heap) == 30);
     
     for (i = 0; i < 30; ++i) 
     {
-        ASSERT(heap_t_contains_key(p_heap, i));
+        ASSERT(heap_contains_key(p_heap, i));
     }
     
     for (i = 30; i < 40; ++i) 
     {
-        ASSERT(heap_t_contains_key(p_heap, i) == false);
+        ASSERT(heap_contains_key(p_heap, i) == false);
     }
     
-    ASSERT(heap_t_is_healthy(p_heap));
+    ASSERT(heap_is_healthy(p_heap));
     
     for (i = 29; i != (size_t) -1; --i) 
     {
-        ASSERT((int) heap_t_extract_min(p_heap) == i);
+        ASSERT((int) heap_extract_min(p_heap) == i);
     }
     
-    ASSERT(heap_t_size(p_heap) == 0);
-    ASSERT(heap_t_is_healthy(p_heap));
+    ASSERT(heap_size(p_heap) == 0);
+    ASSERT(heap_is_healthy(p_heap));
     
     for (i = 10; i < 100; ++i) 
     {
-        ASSERT(heap_t_add(p_heap, i, i));
+        ASSERT(heap_add(p_heap, i, i));
     }
     
-    ASSERT(heap_t_decrease_key(p_heap, 50, 0));
+    ASSERT(heap_decrease_key(p_heap, 50, 0));
     
-    ASSERT((size_t) heap_t_min(p_heap) == 50);
-    ASSERT((size_t) heap_t_extract_min(p_heap) == 50);
+    ASSERT((size_t) heap_min(p_heap) == 50);
+    ASSERT((size_t) heap_extract_min(p_heap) == 50);
     
     for (i = 10; i < 50; ++i) 
     {
-        ASSERT((size_t) heap_t_min(p_heap) == i);
-        ASSERT((size_t) heap_t_extract_min(p_heap) == i);
+        ASSERT((size_t) heap_min(p_heap) == i);
+        ASSERT((size_t) heap_extract_min(p_heap) == i);
     }
     
     for (i = 51; i < 100; ++i) 
     {
-        ASSERT((size_t) heap_t_min(p_heap) == i);
-        ASSERT((size_t) heap_t_extract_min(p_heap) == i);
+        ASSERT((size_t) heap_min(p_heap) == i);
+        ASSERT((size_t) heap_extract_min(p_heap) == i);
     }
     
-    ASSERT(heap_t_min(p_heap) == NULL);
-    ASSERT(heap_t_extract_min(p_heap) == NULL);
+    ASSERT(heap_min(p_heap) == NULL);
+    ASSERT(heap_extract_min(p_heap) == NULL);
+    
+    ASSERT(heap_add(p_heap, 30, 30));
+    ASSERT(heap_add(p_heap, 40, 40));
+    ASSERT(heap_contains_key(p_heap, 30));
+    ASSERT(heap_contains_key(p_heap, 40));
+    ASSERT(heap_size(p_heap) == 2);
+    
+    heap_clear(p_heap);
+    
+    ASSERT(heap_size(p_heap) == 0);
+    ASSERT(heap_extract_min(p_heap) == NULL);
 }
 
 static void test_heap_performance()
 {
-    heap_t* p_heap;
+    heap* p_heap;
     size_t degree;
     size_t i;
     clock_t t;
@@ -795,7 +806,7 @@ static void test_heap_performance()
     {
         duration = 0.0;
         printf("Degree %zu:\n", degree);
-        p_heap = heap_t_alloc(degree,
+        p_heap = heap_alloc(degree,
                               10,
                               1.0f,
                               hash_function,
@@ -805,27 +816,27 @@ static void test_heap_performance()
         
         for (i = 0; i < sz; ++i) 
         {
-            heap_t_add(p_heap, i, 500000 + sz - i);
+            heap_add(p_heap, i, 500000 + sz - i);
         }
         
         /* State: 999999, 999998, 999997, ... */
-        ASSERT(heap_t_is_healthy(p_heap));
+        ASSERT(heap_is_healthy(p_heap));
         
         for (i = sz / 2; i < sz; ++i)
         {
-            heap_t_decrease_key(p_heap, i, i);
+            heap_decrease_key(p_heap, i, i);
         }
         
-        ASSERT(heap_t_is_healthy(p_heap));
+        ASSERT(heap_is_healthy(p_heap));
         
         for (i = 0; i < sz; ++i)
         {
-            heap_t_extract_min(p_heap);
+            heap_extract_min(p_heap);
         }
         
         duration += ((double) clock() - t);
         
-        heap_t_free(p_heap);
+        heap_free(p_heap);
         
         printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);
     }
@@ -1099,8 +1110,9 @@ static void test_fibonacci_heap_correctness()
         ASSERT(fibonacci_heap_contains_key(p_heap, i) == false);
     }
     
+    ASSERT(fibonacci_heap_add(p_heap, 2, 2));
+    ASSERT(fibonacci_heap_add(p_heap, 3, 3));
     fibonacci_heap_free(p_heap);
-    ASSERT(fibonacci_heap_is_healthy(p_heap));
 }
 
 static void test_fibonacci_heap_performance()
@@ -1149,9 +1161,9 @@ static void test_fibonacci_heap_performance()
 }
 
 int main(int argc, char** argv) {
-    test_list_correctness();
-    test_list_performance();
-    
+//    test_list_correctness();
+//    test_list_performance();
+//    
 //    test_unordered_map_correctness();
 //    test_unordered_map_performance();
 //    
@@ -1164,11 +1176,11 @@ int main(int argc, char** argv) {
 //    test_set_correctness();
 //    test_set_performance();
 //    
-//    test_heap_correctness();
-//    test_heap_performance();
+    test_heap_correctness();
+    test_heap_performance();
 //    
-    test_fibonacci_heap_correctness();
-    test_fibonacci_heap_performance(); 
+//    test_fibonacci_heap_correctness();
+//    test_fibonacci_heap_performance(); 
     
     return (EXIT_SUCCESS);
 }
