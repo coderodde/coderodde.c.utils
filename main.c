@@ -152,11 +152,11 @@ static bool equals_function(void* a, void* b)
 
 static void test_unordered_map_performance()
 {
-    unordered_map_t* p_map = unordered_map_t_alloc(7, 
-                                                   0.75f, 
-                                                   hash_function, 
-                                                   equals_function);
-    unordered_map_iterator_t* p_iterator;
+    unordered_map* p_map = unordered_map_alloc(7, 
+                                               0.75f, 
+                                               hash_function, 
+                                               equals_function);
+    unordered_map_iterator* p_iterator;
     
     const int sz = 1000000;
     bool* p_set = calloc(sz, sizeof(bool));
@@ -197,19 +197,19 @@ static void test_unordered_map_performance()
     
     for (i = 0; i < sz; ++i)
     {
-        unordered_map_t_put(p_map, (void*) array[i], (void*)(3 * array[i]));
+        unordered_map_put(p_map, (void*) array[i], (void*)(3 * array[i]));
     }
     
     duration += ((double) clock() - t);
-    printf("Healthy: %d\n", unordered_map_t_is_healthy(p_map));
+    printf("Healthy: %d\n", unordered_map_is_healthy(p_map));
     
-    p_iterator = unordered_map_iterator_t_alloc(p_map);
+    p_iterator = unordered_map_iterator_alloc(p_map);
     i = 0;
     t = clock();
     
-    while (unordered_map_iterator_t_has_next(p_iterator)) 
+    while (unordered_map_iterator_has_next(p_iterator)) 
     {
-        unordered_map_iterator_t_next(p_iterator, &p_key, &p_value);
+        unordered_map_iterator_next(p_iterator, &p_key, &p_value);
         
         if (3 * (int) p_key != (int) p_value && (int) p_key != i) exit(1);
         
@@ -233,7 +233,7 @@ static void test_unordered_map_performance()
     {
         for (j = 0; j < sz; ++j) 
         {   
-            value = unordered_map_t_get(p_map, array[j]);
+            value = unordered_map_get(p_map, array[j]);
             
             if (value != 3 * array[j]) 
             {
@@ -249,7 +249,7 @@ static void test_unordered_map_performance()
     
     for (i = 0; i < sz; ++i) 
     {   
-        value = unordered_map_t_remove(p_map, array[i]);
+        value = unordered_map_remove(p_map, array[i]);
         
         if (value != 3 * array[i]) 
         {
@@ -258,21 +258,21 @@ static void test_unordered_map_performance()
                     array[i], 
                     value, 
                     i, 
-                    unordered_map_t_size(p_map), 
-                    unordered_map_t_contains_key(p_map, array[i]));
+                    unordered_map_size(p_map), 
+                    unordered_map_contains_key(p_map, array[i]));
         } 
     }
     
     
     duration += ((double) clock() - t);
-    printf("Healthy: %d\n", unordered_map_t_is_healthy(p_map));
+    printf("Healthy: %d\n", unordered_map_is_healthy(p_map));
     
-    p_iterator = unordered_map_iterator_t_alloc(p_map);
+    p_iterator = unordered_map_iterator_alloc(p_map);
     
     /* Empty iterator. */
-    while (unordered_map_iterator_t_has_next(p_iterator)) 
+    while (unordered_map_iterator_has_next(p_iterator)) 
     {
-        printf("Element: %d\n", unordered_map_iterator_t_next(p_iterator, 
+        printf("Element: %d\n", unordered_map_iterator_next(p_iterator, 
                                                               &p_key, 
                                                               &p_value));
     }
@@ -444,68 +444,66 @@ void test_unordered_map_correctness()
     void* p_key;
     void* p_value;
     int expected_size;
-    unordered_map_t* p_map = unordered_map_t_alloc(7, 0.4f, hash_function, equals_function);
-    unordered_map_iterator_t* p_iterator;
+    unordered_map* p_map = unordered_map_alloc(7, 0.4f, hash_function, equals_function);
+    unordered_map_iterator* p_iterator;
     
     for (i = -10; i < 10; ++i) 
     {
-        ASSERT(unordered_map_t_contains_key(p_map, (void*) i) == false);
-        ASSERT(unordered_map_t_get(p_map, (void*) i) == NULL);
-        ASSERT(unordered_map_t_size(p_map) == (i + 10));
+        ASSERT(unordered_map_contains_key(p_map, (void*) i) == false);
+        ASSERT(unordered_map_get(p_map, (void*) i) == NULL);
+        ASSERT(unordered_map_size(p_map) == (i + 10));
         
-        unordered_map_t_put(p_map, (void*) i, (void*)(3 * i));
+        unordered_map_put(p_map, (void*) i, (void*)(3 * i));
         
-        ASSERT(unordered_map_t_contains_key(p_map, i) == true);
-        ASSERT(unordered_map_t_get(p_map, (void*) i) == (void*)(3 * i));
-        ASSERT(unordered_map_t_size(p_map) == (i + 10) + 1);
+        ASSERT(unordered_map_contains_key(p_map, i) == true);
+        ASSERT(unordered_map_get(p_map, (void*) i) == (void*)(3 * i));
+        ASSERT(unordered_map_size(p_map) == (i + 10) + 1);
     }
     
-    expected_size = unordered_map_t_size(p_map);
-    p_iterator = unordered_map_iterator_t_alloc(p_map);
+    expected_size = unordered_map_size(p_map);
+    p_iterator = unordered_map_iterator_alloc(p_map);
     ASSERT(expected_size == 20);
     
     for (i = -10; i < 10; ++i) 
     {
-        ASSERT(unordered_map_iterator_t_has_next(p_iterator) == 10 - i);
-        ASSERT(unordered_map_iterator_t_next(p_iterator, &p_key, &p_value));
+        ASSERT(unordered_map_iterator_has_next(p_iterator) == 10 - i);
+        ASSERT(unordered_map_iterator_next(p_iterator, &p_key, &p_value));
         ASSERT(3 * (int) p_key == (int) p_value);
     }
     
-    ASSERT(unordered_map_iterator_t_has_next(p_iterator) == 0);
-    ASSERT(unordered_map_t_size(p_map) == expected_size);
+    ASSERT(unordered_map_iterator_has_next(p_iterator) == 0);
+    ASSERT(unordered_map_size(p_map) == expected_size);
     
-    unordered_map_t_clear(p_map);
+    unordered_map_clear(p_map);
     
-    ASSERT(unordered_map_t_size(p_map) == 0);
-    ASSERT(unordered_map_t_put(p_map, (void*) 1, (void*) 11) == NULL);
-    ASSERT(unordered_map_t_size(p_map) == 1);
-    ASSERT(unordered_map_t_put(p_map, (void*) 1, (void*) 12) == (void*) 11);
-    ASSERT(unordered_map_t_size(p_map) == 1);
-    ASSERT(unordered_map_t_contains_key(p_map, (void*) 1) == true);
-    ASSERT(unordered_map_t_contains_key(p_map, (void*) 2) == false);
-    ASSERT(unordered_map_t_get(p_map, (void*) 1) == (void*) 12);
-    ASSERT(unordered_map_t_get(p_map, (void*) 2) == (void*) 0);
+    ASSERT(unordered_map_size(p_map) == 0);
+    ASSERT(unordered_map_put(p_map, (void*) 1, (void*) 11) == NULL);
+    ASSERT(unordered_map_size(p_map) == 1);
+    ASSERT(unordered_map_put(p_map, (void*) 1, (void*) 12) == (void*) 11);
+    ASSERT(unordered_map_size(p_map) == 1);
+    ASSERT(unordered_map_contains_key(p_map, (void*) 1) == true);
+    ASSERT(unordered_map_contains_key(p_map, (void*) 2) == false);
+    ASSERT(unordered_map_get(p_map, (void*) 1) == (void*) 12);
+    ASSERT(unordered_map_get(p_map, (void*) 2) == (void*) 0);
+  
+    ASSERT(unordered_map_contains_key(p_map, (void*) 10) == false);
+    ASSERT(unordered_map_get(p_map, (void*) 10) == 0);
+    ASSERT(unordered_map_put(p_map, (void*) 10, (void*) 30) == 0);
+    ASSERT(unordered_map_get(p_map, (void*) 10) == (void*) 30);
+    ASSERT(unordered_map_contains_key(p_map, (void*) 10) == true);
+    ASSERT(unordered_map_remove(p_map, (void*) 11) == NULL);
+    ASSERT(unordered_map_get(p_map, (void*) 10) == (void*) 30);
+    ASSERT(unordered_map_contains_key(p_map, (void*) 10) == true);
+    ASSERT(unordered_map_remove(p_map, (void*) 10) == (void*) 30);
+    ASSERT(unordered_map_get(p_map, (void*) 10) == 0);
+    ASSERT(unordered_map_contains_key(p_map, (void*) 10) == false);
     
-    ASSERT(unordered_map_t_contains_key(p_map, (void*) 10) == false);
-    ASSERT(unordered_map_t_get(p_map, (void*) 10) == 0);
-    ASSERT(unordered_map_t_put(p_map, (void*) 10, (void*) 30) == 0);
-    ASSERT(unordered_map_t_get(p_map, (void*) 10) == (void*) 30);
-    ASSERT(unordered_map_t_contains_key(p_map, (void*) 10) == true);
-    ASSERT(unordered_map_t_remove(p_map, (void*) 11) == NULL);
-    ASSERT(unordered_map_t_get(p_map, (void*) 10) == (void*) 30);
-    ASSERT(unordered_map_t_contains_key(p_map, (void*) 10) == true);
-    ASSERT(unordered_map_t_remove(p_map, (void*) 10) == (void*) 30);
-    ASSERT(unordered_map_t_get(p_map, (void*) 10) == 0);
-    ASSERT(unordered_map_t_contains_key(p_map, (void*) 10) == false);
-    
-    
-    
-    for (i = 0; i < 10; ++i) 
+    for (i = 100; i < 110; ++i) 
     {
-        ASSERT(unordered_map_t_put(p_map, (void*) i, (void*) i));
+        ASSERT(unordered_map_put(p_map, (void*) i, (void*) i) == NULL);
     }
     
-    unordered_map_t_free(p_map);
+    unordered_map_free(p_map);
 }
 
 void test_set_correctness() 
@@ -1179,26 +1177,26 @@ static void test_fibonacci_heap_performance()
 }
 
 int main(int argc, char** argv) {
-//    test_list_correctness();
-//    test_list_performance();
+    test_list_correctness();
+    test_list_performance();
     
-//    test_unordered_map_correctness();
-//    test_unordered_map_performance();
+    test_unordered_map_correctness();
+    test_unordered_map_performance();
     
-//    test_unordered_set_correctness();
-//    test_unordered_set_performance();
-//    
+    test_unordered_set_correctness();
+    test_unordered_set_performance();
+    
     test_map_correctness();
     test_map_performance();
     
     test_set_correctness();
     test_set_performance();
-//    
-//    test_heap_correctness();
-//    test_heap_performance();
-//    
-//    test_fibonacci_heap_correctness();
-//    test_fibonacci_heap_performance(); 
+    
+    test_heap_correctness();
+    test_heap_performance();
+    
+    test_fibonacci_heap_correctness();
+    test_fibonacci_heap_performance(); 
     
     return (EXIT_SUCCESS);
 }

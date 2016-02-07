@@ -9,15 +9,15 @@ typedef struct heap_node {
 } heap_node;
 
 struct heap {
-    unordered_map_t* node_map;
-    heap_node**      table;
-    size_t         (*hash_function)(void*);
-    bool           (*equals_function)(void*, void*);
-    int            (*key_compare_function)(void*, void*);
-    size_t           size;
-    size_t           capacity;
-    size_t           degree;
-    size_t*          indices;
+    unordered_map* node_map;
+    heap_node**    table;
+    size_t       (*hash_function)(void*);
+    bool         (*equals_function)(void*, void*);
+    int          (*key_compare_function)(void*, void*);
+    size_t         size;
+    size_t         capacity;
+    size_t         degree;
+    size_t*        indices;
 };
 
 static heap_node* heap_node_alloc(void* element, void* priority) 
@@ -56,7 +56,7 @@ heap* heap_alloc(size_t   degree,
                  int    (*priority_compare_function)(void*, void*))
 {
     heap* my_heap;
-    unordered_map_t* p_map;
+    unordered_map* p_map;
 
     if (!hash_function || !equals_function || !priority_compare_function)
     {
@@ -70,10 +70,10 @@ heap* heap_alloc(size_t   degree,
         return NULL;
     }
     
-    p_map = unordered_map_t_alloc(initial_capacity,
-                                  load_factor,
-                                  hash_function,
-                                  equals_function);
+    p_map = unordered_map_alloc(initial_capacity,
+                                load_factor,
+                                hash_function,
+                                equals_function);
 
     if (!p_map) 
     {
@@ -88,7 +88,7 @@ heap* heap_alloc(size_t   degree,
 
     if (!my_heap->table) 
     {
-        unordered_map_t_free(p_map);
+        unordered_map_free(p_map);
         free(my_heap);
         return NULL;
     }
@@ -97,7 +97,7 @@ heap* heap_alloc(size_t   degree,
 
     if (!my_heap->indices) 
     {
-        unordered_map_t_free(p_map);
+        unordered_map_free(p_map);
         free(my_heap->table);
         free(my_heap);
         return NULL;
@@ -317,7 +317,7 @@ bool heap_add(heap* my_heap, void* element, void* priority)
     }
     
     /* Already in the heap? */
-    if (unordered_map_t_contains_key(my_heap->node_map, element)) 
+    if (unordered_map_contains_key(my_heap->node_map, element)) 
     {
         return false; 
     }
@@ -337,7 +337,7 @@ bool heap_add(heap* my_heap, void* element, void* priority)
     node->index                   = my_heap->size;
     my_heap->table[my_heap->size] = node;
     
-    unordered_map_t_put(my_heap->node_map, element, node);
+    unordered_map_put(my_heap->node_map, element, node);
     sift_up(my_heap, my_heap->size);
     my_heap->size++;
     return true;
@@ -352,7 +352,7 @@ bool heap_decrease_key(heap* my_heap, void* element, void* priority)
         return false;
     }
     
-    if (!(node = unordered_map_t_get(my_heap->node_map, element)))
+    if (!(node = unordered_map_get(my_heap->node_map, element)))
     {
         return false;
     }
@@ -374,7 +374,7 @@ bool heap_contains(heap* my_heap, void* element)
         return false;
     }
     
-    return unordered_map_t_contains_key(my_heap->node_map, element);
+    return unordered_map_contains_key(my_heap->node_map, element);
 }
 
 void* heap_extract_min(heap* my_heap)
@@ -391,7 +391,7 @@ void* heap_extract_min(heap* my_heap)
     ret  = node->element;
     my_heap->size--;
     my_heap->table[0] = my_heap->table[my_heap->size];
-    unordered_map_t_remove(my_heap->node_map, ret);
+    unordered_map_remove(my_heap->node_map, ret);
     sift_down_root(my_heap);
     free(node);
     return ret;
@@ -421,7 +421,7 @@ void heap_clear(heap* my_heap)
         return;
     }
     
-    unordered_map_t_clear(my_heap->node_map);
+    unordered_map_clear(my_heap->node_map);
     
     for (i = 0; i < my_heap->size; ++i)
     {
@@ -439,7 +439,7 @@ void heap_free(heap* my_heap)
     }
     
     heap_clear(my_heap);
-    unordered_map_t_free(my_heap->node_map);
+    unordered_map_free(my_heap->node_map);
     free(my_heap->indices);
     free(my_heap->table);
 }
