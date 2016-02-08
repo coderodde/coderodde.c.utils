@@ -94,6 +94,5 @@ extern "C" {
 }
 #endif
 
-
 #endif	/* UNORDERED_SET_H */
 

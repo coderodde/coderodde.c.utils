@@ -8,6 +8,7 @@
 #include "heap.h"
 #include "list.h"
 #include "fibonacci_heap.h"
+#include "stable_sort.h"
 
 #define ASSERT(CONDITION) assert(CONDITION, #CONDITION, __FILE__, __LINE__)
 
@@ -1176,27 +1177,40 @@ static void test_fibonacci_heap_performance()
     printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);
 }
 
+static int int_compare(const void* a, const void* b)
+{
+    return (int) a - (int) b;
+}
+
+static void test_stable_sort() 
+{
+    int* arr = malloc(40);
+    stable_sort(arr, 10, 4, int_compare);
+}
+
 int main(int argc, char** argv) {
-    test_list_correctness();
-    test_list_performance();
+//    test_list_correctness();
+//    test_list_performance();
+//    
+//    test_unordered_map_correctness();
+//    test_unordered_map_performance();
+//    
+//    test_unordered_set_correctness();
+//    test_unordered_set_performance();
+//    
+//    test_map_correctness();
+//    test_map_performance();
+//    
+//    test_set_correctness();
+//    test_set_performance();
+//    
+//    test_heap_correctness();
+//    test_heap_performance();
+//    
+//    test_fibonacci_heap_correctness();
+//    test_fibonacci_heap_performance(); 
     
-    test_unordered_map_correctness();
-    test_unordered_map_performance();
-    
-    test_unordered_set_correctness();
-    test_unordered_set_performance();
-    
-    test_map_correctness();
-    test_map_performance();
-    
-    test_set_correctness();
-    test_set_performance();
-    
-    test_heap_correctness();
-    test_heap_performance();
-    
-    test_fibonacci_heap_correctness();
-    test_fibonacci_heap_performance(); 
+    test_stable_sort();
     
     return (EXIT_SUCCESS);
 }

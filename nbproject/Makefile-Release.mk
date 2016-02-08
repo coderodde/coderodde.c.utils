@@ -41,6 +41,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/map.o \
 	${OBJECTDIR}/set.o \
+	${OBJECTDIR}/stable_sort.o \
 	${OBJECTDIR}/unordered_map.o \
 	${OBJECTDIR}/unordered_set.o
 
@@ -98,6 +99,11 @@ ${OBJECTDIR}/set.o: set.c
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
 	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/set.o set.c
+
+${OBJECTDIR}/stable_sort.o: stable_sort.c 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/stable_sort.o stable_sort.c
 
 ${OBJECTDIR}/unordered_map.o: unordered_map.c 
 	${MKDIR} -p ${OBJECTDIR}

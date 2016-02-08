@@ -22,7 +22,8 @@ extern "C" {
 
     /***************************************************************************
     * Adds a new element and its priority to the heap only if it is not        *
-    * already present.                                                         *
+    * already present. Returns true only if the input element was not already  * 
+    * in the heap.                                                             *
     ***************************************************************************/  
     bool fibonacci_heap_add(fibonacci_heap* heap, 
                             void* element, 
@@ -37,7 +38,7 @@ extern "C" {
                                      void* priority);
 
     /***************************************************************************
-    * Return true only if the element is in the heap.                          * 
+    * Returns true only if the element is in the heap.                         * 
     ***************************************************************************/  
     bool fibonacci_heap_contains_key(fibonacci_heap* heap, void* element);
 
@@ -77,4 +78,4 @@ extern "C" {
 }
 #endif
 
-#endif	/* HEAP_H */
+#endif	/* FIBONACCI_HEAP_H */
