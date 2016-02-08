@@ -1182,10 +1182,21 @@ static int int_compare(const void* a, const void* b)
     return (int) a - (int) b;
 }
 
+static int ull_compare(const void* a, const void* b)
+{
+    return (unsigned long long) a - (unsigned long long) b;
+}
+
 static void test_stable_sort() 
 {
-    int* arr = malloc(40);
-    stable_sort(arr, 10, 4, int_compare);
+    size_t i;
+    unsigned long long arr[] = { 3, 0, 2, 3, 9, 7, 1, 5 };
+    stable_sort(arr, 8, 8, ull_compare);
+    
+    for (i = 0; i < 8; ++i) 
+    {
+        printf("%llu ", arr[i]);
+    }
 }
 
 int main(int argc, char** argv) {

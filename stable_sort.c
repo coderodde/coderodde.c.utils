@@ -89,7 +89,7 @@ static size_t run_length_queue_size(run_length_queue* queue)
     return queue->size;
 }
 
-static void reverse_run(void* base, size_t num, size_t size, void* swap_buffer)
+static void reverse_run(char* base, size_t num, size_t size, void* swap_buffer)
 {
     size_t left = 0;
     size_t right = num - 1;
@@ -135,11 +135,13 @@ build_run_length_queue(void* base,
         head = left;
         
         /* Decide the direction of the next run. */
-        if (cmp(base + size * left++, base + size * right++) <= 0)
+        if (cmp(((char*) base) + size * left++, 
+                ((char*) base) + size * right++) <= 0)
         {
             /* The run is ascending. */
             while (left < last 
-                    && cmp(base + size * left, base + size * right) <= 0) 
+                    && cmp(((char*) base) + size * left, 
+                           ((char*) base) + size * right) <= 0) 
             {
                 ++left;
                 ++right;
@@ -149,7 +151,8 @@ build_run_length_queue(void* base,
             
             if (previous_was_descending)
             {
-                if (cmp(base + (head - 1) * size, base + head * size) <= 0)
+                if (cmp(((char*) base) + (head - 1) * size, 
+                        ((char*) base) + head * size) <= 0)
                 {
                     run_length_queue_add_to_last(queue, run_length);
                 }
@@ -169,18 +172,23 @@ build_run_length_queue(void* base,
         {
             /* Scan a strictly descending run. */
             while (left < last
-                    && cmp(base + left * size, base + right * size) > 0)
+                    && cmp(((char*) base) + size * left, 
+                           ((char*) base) + size * right) > 0)
             {
                 ++left;
                 ++right;
             }
             
             run_length = left - head + 1;
-            reverse_run(base + head * size, run_length, size, swap_buffer);
+            reverse_run(((char*) base) + head * size, 
+                        run_length,
+                        size, 
+                        swap_buffer);
             
             if (previous_was_descending)
             {
-                if (cmp(base + (head - 1) * size, base + head * size) <= 0) 
+                if (cmp(((char*) base) + size * (head - 1), 
+                        ((char*) base) + size * head) <= 0) 
                 {
                     run_length_queue_add_to_last(queue, run_length);
                 }
@@ -203,7 +211,8 @@ build_run_length_queue(void* base,
     
     if (left == last)
     {
-        if (cmp(base + (last - 1) * size, base + last * size) <= 0) 
+        if (cmp(((char*) base) + size * (last - 1), 
+                ((char*) base) + size * last) <= 0) 
         {
             run_length_queue_add_to_last(queue, 1);
         }
@@ -220,24 +229,26 @@ build_run_length_queue(void* base,
 void stable_sort(void* base, size_t num, size_t size, int (*comparator)(const void*, const void*))
 {
     size_t i;
-    run_length_queue* queue = run_length_queue_alloc(1000);
+    run_length_queue* queue;
     
     if (!base || !comparator || num < 2 || size == 0) 
     {
         return;
     }
     
-    for (i = 0; i < 1000; ++i) 
+    queue = build_run_length_queue(base, num, size, comparator);
+    puts("FDSFA");
+    printf("size %d\n", run_length_queue_size(queue));
+    for (i = 0; i < run_length_queue_size(queue); ++i) 
     {
-        run_length_queue_enqueue(queue, i);
+        printf("%llz ", run_length_queue_dequeue(queue));
     }
     
-    puts("FDSF");
-    for (i = 0; i < 1000; ++i) 
+    if (!queue) 
     {
-        if (i != run_length_queue_dequeue(queue))
-        {
-            printf("%d\n", i);
-        }
+        /* Cannot allocate the run length queue. Resort to qsort and possibly 
+           fail in the same manner as qsort. */
+        qsort(base, num, size, comparator);
+        return;
     }
 }
