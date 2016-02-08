@@ -564,8 +564,8 @@ void test_unordered_set_correctness()
     int i;
     void* p_key;
     int expected_size;
-    unordered_set_t* p_set = unordered_set_t_alloc(7, 0.8f, hash_function, equals_function);
-    unordered_set_iterator_t* p_iterator;
+    unordered_set* p_set = unordered_set_t_alloc(7, 0.8f, hash_function, equals_function);
+    unordered_set_iterator* p_iterator;
     
     for (i = -10; i < 10; ++i) 
     {
@@ -613,8 +613,8 @@ void test_unordered_set_correctness()
 
 static void test_unordered_set_performance()
 {
-    unordered_set_t* p_set = unordered_set_t_alloc(7, 0.8f, hash_function, equals_function);
-    unordered_set_iterator_t* p_iterator;
+    unordered_set* p_set = unordered_set_t_alloc(7, 0.8f, hash_function, equals_function);
+    unordered_set_iterator* p_iterator;
     
     const int sz = 1000000;
     

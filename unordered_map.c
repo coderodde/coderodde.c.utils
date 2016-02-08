@@ -35,8 +35,11 @@ static unordered_map_entry* unordered_map_entry_alloc(void* key, void* value)
 {
     unordered_map_entry* entry = malloc(sizeof(*entry));
 
-    if (!entry) return NULL;
-
+    if (!entry) 
+    {
+        return NULL;
+    }
+    
     entry->key        = key;
     entry->value      = value;
     entry->chain_next = NULL;
@@ -78,7 +81,11 @@ static size_t fix_initial_capacity(size_t initial_capacity)
     initial_capacity = maxi(initial_capacity, MINIMUM_INITIAL_CAPACITY);
     ret = 1;
 
-    while (ret < initial_capacity) ret <<= 1;
+    while (ret < initial_capacity) 
+    {
+        ret <<= 1;
+    }
+        
     return ret;
 }
 
@@ -89,28 +96,33 @@ unordered_map* unordered_map_alloc(size_t initial_capacity,
 {
     unordered_map* map;
 
-    if (!hash_function)   return NULL;
-    if (!equals_function) return NULL;
+    if (!hash_function || !equals_function)  
+    {
+        return NULL;
+    }
 
     map = malloc(sizeof(*map));
 
-    if (!map) return NULL;
-
+    if (!map) 
+    {
+        return NULL;
+    }
+    
     load_factor      = fix_load_factor(load_factor);
     initial_capacity = fix_initial_capacity(initial_capacity);
 
-    map->load_factor       = load_factor;
-    map->table_capacity    = initial_capacity;
-    map->size              = 0;
-    map->mod_count         = 0;
-    map->head            = NULL;
-    map->tail            = NULL;
-    map->table           = calloc(initial_capacity,
-                                  sizeof(unordered_map_entry*));
-    map->hash_function   = hash_function;
-    map->equals_function = equals_function;
-    map->mask              = initial_capacity - 1;
-    map->max_allowed_size  = (size_t)(initial_capacity * load_factor);
+    map->load_factor      = load_factor;
+    map->table_capacity   = initial_capacity;
+    map->size             = 0;
+    map->mod_count        = 0;
+    map->head             = NULL;
+    map->tail             = NULL;
+    map->table            = calloc(initial_capacity, 
+                                   sizeof(unordered_map_entry*));
+    map->hash_function    = hash_function;
+    map->equals_function  = equals_function;
+    map->mask             = initial_capacity - 1;
+    map->max_allowed_size = (size_t)(initial_capacity * load_factor);
 
     return map;
 }
@@ -123,14 +135,20 @@ static void ensure_capacity(unordered_map* map)
     unordered_map_entry* entry;
     unordered_map_entry** new_table;
 
-    if (map->size < map->max_allowed_size) return;
+    if (map->size < map->max_allowed_size) 
+    {
+        return;
+    }
     
     new_capacity = 2 * map->table_capacity;
     new_mask     = new_capacity - 1;
-    new_table  = calloc(new_capacity, sizeof(unordered_map_entry*));
+    new_table    = calloc(new_capacity, sizeof(unordered_map_entry*));
     
-    if (!new_table) return;
-
+    if (!new_table)
+    {
+        return;
+    }
+    
     /* Rehash the entries. */
     for (entry = map->head; entry; entry = entry->next)
     {
@@ -141,7 +159,7 @@ static void ensure_capacity(unordered_map* map)
 
     free(map->table);
     
-    map->table          = new_table;
+    map->table            = new_table;
     map->table_capacity   = new_capacity;
     map->mask             = new_mask;
     map->max_allowed_size = (size_t)(new_capacity * map->load_factor);
@@ -154,14 +172,15 @@ void* unordered_map_put(unordered_map* map, void* key, void* value)
     void* old_value;
     unordered_map_entry* entry;
 
-    if (!map) return NULL;
-
+    if (!map) 
+    {
+        return NULL;
+    }
+    
     hash_value = map->hash_function(key);
     index = hash_value & map->mask;
 
-    for (entry = map->table[index]; 
-         entry;
-         entry = entry->chain_next)
+    for (entry = map->table[index]; entry; entry = entry->chain_next)
     {
         if (map->equals_function(entry->key, key))
         {
@@ -174,8 +193,8 @@ void* unordered_map_put(unordered_map* map, void* key, void* value)
     ensure_capacity(map);
 
     /* Recompute the index since it is possibly changed by 'ensure_capacity' */
-    index                 = hash_value & map->mask;
-    entry               = unordered_map_entry_alloc(key, value);
+    index             = hash_value & map->mask;
+    entry             = unordered_map_entry_alloc(key, value);
     entry->chain_next = map->table[index];
     map->table[index] = entry;
 
@@ -194,6 +213,7 @@ void* unordered_map_put(unordered_map* map, void* key, void* value)
 
     map->size++;
     map->mod_count++;
+    
     return NULL;
 }
 
@@ -202,15 +222,19 @@ bool unordered_map_contains_key(unordered_map* map, void* key)
     size_t index;
     unordered_map_entry* entry;
 
-    if (!map) return false;
-
+    if (!map) 
+    {
+        return false;
+    }
+    
     index = map->hash_function(key) & map->mask;
 
-    for (entry = map->table[index]; 
-         entry; 
-         entry = entry->chain_next) 
+    for (entry = map->table[index]; entry; entry = entry->chain_next) 
     {
-        if (map->equals_function(key, entry->key)) return true;
+        if (map->equals_function(key, entry->key))
+        {
+            return true;
+        }
     }
 
     return false;
@@ -221,16 +245,19 @@ void* unordered_map_get(unordered_map* map, void* key)
     size_t index;
     unordered_map_entry* p_entry;
 
-    if (!map) return NULL;
-
+    if (!map) 
+    {
+        return NULL;
+    }
+    
     index = map->hash_function(key) & map->mask;
 
-    for (p_entry = map->table[index];
-         p_entry;
-         p_entry = p_entry->chain_next)
+    for (p_entry = map->table[index]; p_entry; p_entry = p_entry->chain_next)
     {
-        if (map->equals_function(key, p_entry->key)) 
+        if (map->equals_function(key, p_entry->key))
+        {
             return p_entry->value;
+        }
     }
 
     return NULL;
@@ -243,8 +270,11 @@ void* unordered_map_remove(unordered_map* map, void* key)
     unordered_map_entry* prev_entry;
     unordered_map_entry* current_entry;
 
-    if (!map) return NULL;
-
+    if (!map) 
+    {
+        return NULL;
+    }
+    
     index = map->hash_function(key) & map->mask;
 
     prev_entry = NULL;
@@ -303,8 +333,11 @@ void unordered_map_clear(unordered_map* map)
     unordered_map_entry* next_entry;
     size_t index;
 
-    if (!map) return;
-
+    if (!map)
+    {
+        return;
+    }
+    
     entry = map->head;
 
     while (entry)
@@ -332,13 +365,19 @@ bool unordered_map_is_healthy(unordered_map* map)
     size_t counter;
     unordered_map_entry* entry;
 
-    if (!map) return false;
-
+    if (!map)
+    {
+        return false;
+    }
+    
     counter = 0;
     entry = map->head;
 
-    if (entry && entry->prev) return false;
-
+    if (entry && entry->prev) 
+    {
+        return false;
+    }
+    
     for (; entry; entry = entry->next)
     {
         counter++;
@@ -349,8 +388,11 @@ bool unordered_map_is_healthy(unordered_map* map)
 
 void unordered_map_free(unordered_map* map)
 {
-    if (!map) return;
-
+    if (!map)
+    {
+        return;
+    }
+    
     unordered_map_clear(map);
     free(map->table);
     free(map);
@@ -361,12 +403,18 @@ unordered_map_iterator_alloc(unordered_map* map)
 {
     unordered_map_iterator* p_ret;
 
-    if (!map) return NULL;
-
+    if (!map) 
+    {
+        return NULL;
+    }
+    
     p_ret = malloc(sizeof(*p_ret));
 
-    if (!p_ret) return NULL;
-
+    if (!p_ret) 
+    {
+        return NULL;
+    }
+    
     p_ret->map              = map;
     p_ret->iterated_count     = 0;
     p_ret->next_entry       = map->head;
@@ -377,10 +425,16 @@ unordered_map_iterator_alloc(unordered_map* map)
 
 size_t unordered_map_iterator_has_next(unordered_map_iterator* iterator)
 {
-    if (!iterator) return 0;
-
-    if (unordered_map_iterator_is_disturbed(iterator)) return 0;
-
+    if (!iterator) 
+    {
+        return 0;
+    }
+    
+    if (unordered_map_iterator_is_disturbed(iterator)) 
+    {
+        return 0;
+    }
+    
     return iterator->map->size - iterator->iterated_count;
 }
 
@@ -388,29 +442,46 @@ bool unordered_map_iterator_next(unordered_map_iterator* iterator,
                                    void** key_pointer, 
                                    void** value_pointer)
 {
-    if (!iterator)                                       return false;
-    if (!iterator->next_entry)                         return false;
-    if (unordered_map_iterator_is_disturbed(iterator)) return false;
-
+    if (!iterator)   
+    {
+        return false;
+    }
+        
+    if (!iterator->next_entry)         
+    {
+        return false;
+    }
+    
+    if (unordered_map_iterator_is_disturbed(iterator))
+    {
+        return false;
+    }
+    
     *key_pointer   = iterator->next_entry->key;
     *value_pointer = iterator->next_entry->value;
     iterator->iterated_count++;
     iterator->next_entry = iterator->next_entry->next;
+    
     return true;
 }
 
-bool
-unordered_map_iterator_is_disturbed(unordered_map_iterator* iterator)
+bool unordered_map_iterator_is_disturbed(unordered_map_iterator* iterator)
 {
-    if (!iterator) false;
-
+    if (!iterator)
+    {
+        false;
+    }
+    
     return iterator->expected_mod_count != iterator->map->mod_count;
 }
 
 void unordered_map_iterator_free(unordered_map_iterator* iterator)
 {
-    if (!iterator) return;
-
+    if (!iterator) 
+    {
+        return;
+    }
+    
     iterator->map = NULL;
     iterator->next_entry = NULL;
     free(iterator);
