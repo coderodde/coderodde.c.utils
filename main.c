@@ -1260,7 +1260,7 @@ static void test_stable_sort()
 {
     clock_t t;
     double duration;
-    const size_t ARRAY_SIZE = 1000 * 1000;
+    const size_t ARRAY_SIZE = 10 * 1000 * 1000;
     int* array1 = get_random_integer_array(ARRAY_SIZE);
     int* array2 = copy_integer_array(array1, ARRAY_SIZE);
     

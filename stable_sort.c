@@ -228,48 +228,32 @@ build_run_length_queue(void* base,
     return queue;
 }
 
-void merge(void* source,
-                  void* target,
-                  size_t size,
-                  size_t offset,
-                  size_t left_run_length,
-                  size_t right_run_length,
-                  int (*cmp)(const void*, const void*)) 
+void merge(char* target,
+           char* left,
+           char* right,
+           char* left_bound,
+           char* right_bound,
+           size_t size,
+           int (*cmp)(const void*, const void*))
 {
-    size_t left  = offset;
-    size_t right = left + left_run_length;
-    const size_t left_bound = right;
-    const size_t right_bound = right + right_run_length;
-    size_t target_index = offset;
-
     while (left < left_bound && right < right_bound)
     {
-        if (cmp(((char*) source) + size * right, 
-                ((char*) source) + size * left) < 0) 
+        if (cmp(right, left) < 0) 
         {
-            memcpy(((char*) target) + size * target_index, 
-                   ((char*) source) + size * right,
-                   size);
-            ++right;
-        } 
+            memcpy(target, right, size);
+            right += size;
+        }
         else
         {
-            memcpy(((char*) target) + size * target_index,
-                   ((char*) source) + size * left,
-                   size);
-            ++left;
+            memcpy(target, left, size);
+            left += size;
         }
-
-        ++target_index;
+        
+        target += size;
     }
-
-    memcpy(((char*) target) + size * target_index, 
-           ((char*) source) + size * left,
-           (left_bound - left) * size);
-
-    memcpy(((char*) target) + size * target_index,
-           ((char*) source) + size * right,
-           (right_bound - right) * size);
+        
+    memcpy(target, left, left_bound - left);
+    memcpy(target, right, right_bound - right);
 }
 
 static size_t get_number_of_leading_zeros(size_t number)
@@ -296,16 +280,16 @@ static size_t get_number_of_merge_passes(size_t runs)
 
 void stable_sort(void* base, size_t num, size_t size, int (*comparator)(const void*, const void*))
 {
-    size_t i;
-
     run_length_queue* queue;
 
     void* buffer;
     void* source;
     void* target;
     void* tmp;
-
-    size_t offset;
+    char* left;
+    char* right;
+    char* target_pointer;
+    
     size_t merge_passes;
     size_t runs_remaining;
     size_t tail_run_length;
@@ -351,43 +335,48 @@ void stable_sort(void* base, size_t num, size_t size, int (*comparator)(const vo
         target = buffer;
     }
 
-    offset = 0;
     runs_remaining = run_length_queue_size(queue);
-
+    target_pointer = (char*) target;
+    left = (char*) source;
+    
     while (run_length_queue_size(queue) > 1) 
     {
         left_run_length  = run_length_queue_dequeue(queue);
         right_run_length = run_length_queue_dequeue(queue);
 
-        merge(source,
-              target,
+        right = left + left_run_length * size;
+        
+        merge(target_pointer,
+              left,
+              right,
+              left + left_run_length * size,
+              right + right_run_length * size,
               size,
-              offset,
-              left_run_length,
-              right_run_length,
               comparator);
-
+        
+        target_pointer += (left_run_length + right_run_length) * size;
         run_length_queue_enqueue(queue, left_run_length + right_run_length);
         runs_remaining -= 2;
-        offset += left_run_length + right_run_length;
+        left = right + right_run_length * size;
 
         switch (runs_remaining)
         {
             case 1:
                 tail_run_length = run_length_queue_dequeue(queue);
-                memcpy(((char*) target) + offset * size,
-                       ((char*) source) + offset * size,
-                       size * tail_run_length);
+                memcpy(target_pointer, left, tail_run_length * size);
                 run_length_queue_enqueue(queue, tail_run_length);
                 /* FALL THROUGH! */
 
             case 0:
                 runs_remaining = run_length_queue_size(queue);
-                offset = 0;
 
                 tmp = source;
                 source = target;
                 target = tmp;
+               
+                target_pointer = target;
+                left = source;
+                
                 break;
         }
     }
