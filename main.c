@@ -1187,10 +1187,18 @@ static void test_stable_sort()
     size_t i;
     int arr[] = { 3, 0, 2, 3, 9, 7, 1, 5 };
     stable_sort(arr, 8, sizeof(int), int_compare);
+    int arr2[8];
     
-    for (i = 0; i < 8; ++i) 
+//    for (i = 0; i < 8; ++i) 
+//    {
+//        printf("%llu ", arr[i]);
+//    }
+    
+    merge(arr, arr2, sizeof(int), 2, 3, 2, int_compare);
+    
+    for (i = 2; i < 7; ++i) 
     {
-        printf("%llu ", arr[i]);
+        printf("%d ", arr2[i]);
     }
 }
 

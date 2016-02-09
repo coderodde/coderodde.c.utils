@@ -233,6 +233,50 @@ build_run_length_queue(void* base,
     return queue;
 }
 
+void merge(void* source,
+                  void* target,
+                  size_t size,
+                  size_t offset,
+                  size_t left_run_length,
+                  size_t right_run_length,
+                  int (*cmp)(const void*, const void*)) 
+{
+    size_t left  = offset;
+    size_t right = left + left_run_length;
+    const size_t left_bound = right;
+    const size_t right_bound = right + right_run_length;
+    size_t target_index = offset;
+    
+    while (left < left_bound && right < right_bound)
+    {
+        if (cmp(((char*) source) + size * right, 
+                ((char*) source) + size * left) < 0) 
+        {
+            memcpy(((char*) target) + size * target_index, 
+                   ((char*) source) + size * right,
+                   size);
+            ++right;
+        } 
+        else
+        {
+            memcpy(((char*) target) + size * target_index,
+                   ((char*) source) + size * left,
+                   size);
+            ++left;
+        }
+        
+        ++target_index;
+    }
+    
+    memcpy(((char*) target) + size * target_index, 
+           ((char*) source) + size * left,
+           (left_bound - left) * size);
+    
+    memcpy(((char*) target) + size * target_index,
+           ((char*) source) + size * right,
+           (right_bound - right) * size);
+}
+
 void stable_sort(void* base, size_t num, size_t size, int (*comparator)(const void*, const void*))
 {
     size_t i;
@@ -253,8 +297,6 @@ void stable_sort(void* base, size_t num, size_t size, int (*comparator)(const vo
         return;
     }
     
-    puts("FDSFA");
-    printf("size %d\n", run_length_queue_size(queue));
     for (i = 0; i < run_length_queue_size(queue); ++i) 
     {
         printf("%llz ", run_length_queue_dequeue(queue));
