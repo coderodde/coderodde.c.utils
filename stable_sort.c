@@ -93,12 +93,15 @@ static void reverse_run(char* base, size_t num, size_t size, void* swap_buffer)
 {
     size_t left = 0;
     size_t right = num - 1;
+ 
+    printf("Reverse run: %d\n", num);
     
     while (left < right)
     {
-        memcpy(swap_buffer, base + left * num, size);
-        memcpy(base + left * num, base + right * num, size);
-        memcpy(base + right * num, swap_buffer, size);
+        memcpy(swap_buffer, base + size * left, size);
+        memcpy(base + size * left, base + size * right, size);
+        memcpy(base + size * right, swap_buffer, size);
+        
         ++left;
         --right;
     }
@@ -118,7 +121,7 @@ build_run_length_queue(void* base,
     size_t run_length;
     bool previous_was_descending;
     void* swap_buffer = malloc(size);
-    queue = run_length_queue_alloc((num >>= 1) + 1);
+    queue = run_length_queue_alloc((num >> 1) + 1);
     
     if (!queue)
     {
@@ -130,8 +133,11 @@ build_run_length_queue(void* base,
     last = num - 1;
     previous_was_descending = false;
     
+    printf("num = %d, left = %d, last = %d\n", num, left, last);
+    
     while (left < last)
     {
+        puts("A");
         head = left;
         
         /* Decide the direction of the next run. */
@@ -143,6 +149,7 @@ build_run_length_queue(void* base,
                     && cmp(((char*) base) + size * left, 
                            ((char*) base) + size * right) <= 0) 
             {
+                puts("Funk");
                 ++left;
                 ++right;
             }
@@ -237,12 +244,6 @@ void stable_sort(void* base, size_t num, size_t size, int (*comparator)(const vo
     }
     
     queue = build_run_length_queue(base, num, size, comparator);
-    puts("FDSFA");
-    printf("size %d\n", run_length_queue_size(queue));
-    for (i = 0; i < run_length_queue_size(queue); ++i) 
-    {
-        printf("%llz ", run_length_queue_dequeue(queue));
-    }
     
     if (!queue) 
     {
@@ -251,4 +252,13 @@ void stable_sort(void* base, size_t num, size_t size, int (*comparator)(const vo
         qsort(base, num, size, comparator);
         return;
     }
+    
+    puts("FDSFA");
+    printf("size %d\n", run_length_queue_size(queue));
+    for (i = 0; i < run_length_queue_size(queue); ++i) 
+    {
+        printf("%llz ", run_length_queue_dequeue(queue));
+    }
+    
+    
 }

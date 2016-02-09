@@ -1179,19 +1179,14 @@ static void test_fibonacci_heap_performance()
 
 static int int_compare(const void* a, const void* b)
 {
-    return (int) a - (int) b;
-}
-
-static int ull_compare(const void* a, const void* b)
-{
-    return (unsigned long long) a - (unsigned long long) b;
+    return (*(int*) a - *(int*)b);
 }
 
 static void test_stable_sort() 
 {
     size_t i;
-    unsigned long long arr[] = { 3, 0, 2, 3, 9, 7, 1, 5 };
-    stable_sort(arr, 8, 8, ull_compare);
+    int arr[] = { 3, 0, 2, 3, 9, 7, 1, 5 };
+    stable_sort(arr, 8, sizeof(int), int_compare);
     
     for (i = 0; i < 8; ++i) 
     {
