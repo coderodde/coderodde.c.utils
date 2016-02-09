@@ -47,7 +47,7 @@ OBJECTFILES= \
 
 
 # C Compiler Flags
-CFLAGS=-O3 -ansi -pedantic -Wno-int-to-void-pointer-cast -Wno-int-conversion
+CFLAGS=-ansi -pedantic -Wno-int-to-void-pointer-cast -Wno-int-conversion
 
 # CC Compiler Flags
 CCFLAGS=

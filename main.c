@@ -1185,21 +1185,29 @@ static int int_compare(const void* a, const void* b)
 static void test_stable_sort() 
 {
     size_t i;
-    int arr[] = { 3, 0, 2, 3, 9, 7, 1, 5 };
-    stable_sort(arr, 8, sizeof(int), int_compare);
-    int arr2[8];
+    int arr[] = { 3, 0, 2, 3, 9, 7, 1, 5, 4, 6, 7 };
+
+    stable_sort(arr, 11, sizeof(int), int_compare);
+    puts("Sorted array:");
     
-//    for (i = 0; i < 8; ++i) 
-//    {
-//        printf("%llu ", arr[i]);
-//    }
-    
-    merge(arr, arr2, sizeof(int), 2, 3, 2, int_compare);
-    
-    for (i = 2; i < 7; ++i) 
+    for (i = 0; i < 11; ++i) 
     {
-        printf("%d ", arr2[i]);
+        printf("%d ", arr[i]);
     }
+//    
+//    int arr2[8];
+//    
+////    for (i = 0; i < 8; ++i) 
+////    {
+////        printf("%llu ", arr[i]);
+////    }
+//    
+//    merge(arr, arr2, sizeof(int), 2, 3, 2, int_compare);
+//    
+//    for (i = 2; i < 7; ++i) 
+//    {
+//        printf("%d ", arr2[i]);
+//    }
 }
 
 int main(int argc, char** argv) {

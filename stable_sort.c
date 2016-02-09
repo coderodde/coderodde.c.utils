@@ -31,6 +31,7 @@ static size_t max(size_t a, size_t b)
 }
 
 static const size_t MINIMUM_RUN_LENGTH_QUEUE_CAPACITY = 256;
+static const size_t BITS_PER_BYTE = 8;
 
 static run_length_queue* run_length_queue_alloc(size_t capacity) 
 {
@@ -89,12 +90,18 @@ static size_t run_length_queue_size(run_length_queue* queue)
     return queue->size;
 }
 
+static void run_length_queue_free(run_length_queue* queue) 
+{
+    if (queue && queue->storage)
+    {
+        free(queue->storage);
+    }
+}
+
 static void reverse_run(char* base, size_t num, size_t size, void* swap_buffer)
 {
     size_t left = 0;
     size_t right = num - 1;
- 
-    printf("Reverse run: %d\n", num);
     
     while (left < right)
     {
@@ -133,11 +140,8 @@ build_run_length_queue(void* base,
     last = num - 1;
     previous_was_descending = false;
     
-    printf("num = %d, left = %d, last = %d\n", num, left, last);
-    
     while (left < last)
     {
-        puts("A");
         head = left;
         
         /* Decide the direction of the next run. */
@@ -149,7 +153,6 @@ build_run_length_queue(void* base,
                     && cmp(((char*) base) + size * left, 
                            ((char*) base) + size * right) <= 0) 
             {
-                puts("Funk");
                 ++left;
                 ++right;
             }
@@ -277,14 +280,70 @@ void merge(void* source,
            (right_bound - right) * size);
 }
 
+static size_t get_number_of_leading_zeros(size_t number)
+{
+    size_t mask = 1; 
+    size_t number_of_leading_zeros = 0;
+    
+    mask <<= (sizeof number) * BITS_PER_BYTE - 1;
+    
+    while (mask && ((mask & number) == 0))
+    {
+        ++number_of_leading_zeros;
+        mask >>= 1;
+    }
+    
+    return number_of_leading_zeros;
+}
+
+static size_t get_number_of_merge_passes(size_t runs) 
+{
+    return sizeof(size_t) * BITS_PER_BYTE - 
+           get_number_of_leading_zeros(runs - 1);
+}
+
 void stable_sort(void* base, size_t num, size_t size, int (*comparator)(const void*, const void*))
 {
     size_t i;
+    
     run_length_queue* queue;
+    
+    void* buffer;
+    void* source;
+    void* target;
+    void* tmp;
+    
+    size_t offset;
+    size_t merge_passes;
+    size_t runs_remaining;
+    size_t tail_run_length;
+    size_t left_run_length;
+    size_t right_run_length;
     
     if (!base || !comparator || num < 2 || size == 0) 
     {
         return;
+    }
+    
+    merge_passes = get_number_of_merge_passes(run_length_queue_size(queue));
+    buffer = malloc(num * size);
+    
+    if (!buffer)
+    {
+        qsort(base, num, size, comparator);
+        return;
+    }
+    
+    if ((merge_passes & 1) == 1) 
+    {
+        source = buffer;
+        target = base;
+        memcpy(buffer, base, num * size);
+    }
+    else
+    {
+        source = base;
+        target = buffer;
     }
     
     queue = build_run_length_queue(base, num, size, comparator);
@@ -297,10 +356,47 @@ void stable_sort(void* base, size_t num, size_t size, int (*comparator)(const vo
         return;
     }
     
-    for (i = 0; i < run_length_queue_size(queue); ++i) 
+    offset = 0;
+    runs_remaining = run_length_queue_size(queue);
+    
+    while (run_length_queue_size(queue) > 1) 
     {
-        printf("%llz ", run_length_queue_dequeue(queue));
+        left_run_length  = run_length_queue_dequeue(queue);
+        right_run_length = run_length_queue_dequeue(queue);
+        
+        merge(source,
+              target,
+              size,
+              offset,
+              left_run_length,
+              right_run_length,
+              comparator);
+        
+        run_length_queue_enqueue(queue, left_run_length + right_run_length);
+        runs_remaining -= 2;
+        offset += left_run_length + right_run_length;
+        
+        switch (runs_remaining)
+        {
+            case 1:
+                tail_run_length = run_length_queue_dequeue(queue);
+                memcpy(((char*) target) + offset * size,
+                       ((char*) source) + offset * size,
+                       size * tail_run_length);
+                run_length_queue_enqueue(queue, tail_run_length);
+                /* FALL THROUGH! */
+                
+            case 0:
+                runs_remaining = run_length_queue_size(queue);
+                offset = 0;
+                
+                tmp = source;
+                source = target;
+                target = tmp;
+                break;
+        }
     }
     
-    
+    run_length_queue_free(queue);
+    free(buffer);
 }
