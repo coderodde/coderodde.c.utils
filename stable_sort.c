@@ -125,12 +125,18 @@ build_run_length_queue(void* base,
                        int (*cmp)(const void*, const void*)) 
 {
     run_length_queue* queue;
-    size_t head;
-    size_t left;
-    size_t right;
-    size_t last;
+//    size_t head;
+//    size_t left;
+//    size_t right;
+//    size_t last;
     size_t run_length;
     bool previous_was_descending;
+    
+    char* head_ptr;
+    char* left_ptr;
+    char* right_ptr;
+    char* last_ptr;
+    
     void* swap_buffer = malloc(size);
     queue = run_length_queue_alloc((num >> 1) + 1);
 
@@ -139,33 +145,31 @@ build_run_length_queue(void* base,
         return NULL;
     }
 
-    left = 0;
-    right = 1;
-    last = num - 1;
-    previous_was_descending = false;
+    left_ptr  = (char*) base;
+    right_ptr = ((char*) base) + size;
+    last_ptr  = ((char*) base) + size * (num - 1);
 
-    while (left < last)
+    while (left_ptr < last_ptr)
     {
-        head = left;
+        head_ptr = left_ptr;
 
         /* Decide the direction of the next run. */
-        if (cmp(((char*) base) + size * left++, 
-                ((char*) base) + size * right++) <= 0)
+        if (cmp(left_ptr, right_ptr) <= 0)
         {
+            left_ptr  += size;
+            right_ptr += size;
             /* The run is ascending. */
-            while (left < last 
-                    && cmp(((char*) base) + size * left, 
-                           ((char*) base) + size * right) <= 0) 
+            while (left_ptr < last_ptr
+                    && cmp(left_ptr, right_ptr) <= 0)  
             {
-                ++left;
-                ++right;
+                left_ptr  += size;
+                right_ptr += size;
             }
 
-            run_length = left - head + 1;
+            run_length = (left_ptr - head_ptr) / size + 1;
 
             if (previous_was_descending
-                    && cmp(((char*) base) + size * (head - 1),
-                           ((char*) base) + size * head) <= 0)
+                    && cmp(head_ptr - size, head_ptr) <= 0) 
             {
                     run_length_queue_add_to_last(queue, run_length);
             }
@@ -178,24 +182,26 @@ build_run_length_queue(void* base,
         }
         else
         {
+            left_ptr  += size;
+            right_ptr += size;
+            
             /* Scan a strictly descending run. */
-            while (left < last
-                    && cmp(((char*) base) + size * left, 
-                           ((char*) base) + size * right) > 0)
+            while (left_ptr < last_ptr
+                    && cmp(left_ptr, right_ptr) > 0) 
             {
-                ++left;
-                ++right;
+                left_ptr  += size;
+                right_ptr += size;
             }
 
-            run_length = left - head + 1;
-            reverse_run(((char*) base) + head * size, 
+            run_length = (left_ptr - head_ptr) / size + 1;
+            
+            reverse_run(head_ptr, 
                         run_length,
                         size, 
                         swap_buffer);
 
             if (previous_was_descending
-                    && cmp(((char*) base) + size * (head - 1),
-                           ((char*) base) + size * head) <= 0)
+                    && cmp(head_ptr - size, head_ptr) <= 0) 
             {
                 run_length_queue_add_to_last(queue, run_length);
             }
@@ -207,14 +213,13 @@ build_run_length_queue(void* base,
             previous_was_descending = true;
         }
 
-        ++left;
-        ++right;
+        left_ptr  += size;
+        right_ptr += size;
     }
 
-    if (left == last)
+    if (left_ptr == last_ptr)
     {
-        if (cmp(((char*) base) + size * (last - 1), 
-                ((char*) base) + size * last) <= 0) 
+        if (cmp(last_ptr - size, last_ptr) <= 0)  
         {
             run_length_queue_add_to_last(queue, 1);
         }
@@ -310,7 +315,7 @@ void stable_sort(void* base, size_t num, size_t size, int (*comparator)(const vo
     }
 
     queue = build_run_length_queue(base, num, size, comparator);
-
+    
     if (!queue) 
     {
         free(buffer);
