@@ -139,15 +139,17 @@ build_run_length_queue(void* base,
     right = 1;
     last = num - 1;
     previous_was_descending = false;
+    printf("Size: %d\n", size);
     
     while (left < last)
     {
         head = left;
-        
+        puts("Iter");
         /* Decide the direction of the next run. */
         if (cmp(((char*) base) + size * left++, 
                 ((char*) base) + size * right++) <= 0)
         {
+            puts("Ascending");
             /* The run is ascending. */
             while (left < last 
                     && cmp(((char*) base) + size * left, 
@@ -180,6 +182,7 @@ build_run_length_queue(void* base,
         }
         else
         {
+            puts("Descending");
             /* Scan a strictly descending run. */
             while (left < last
                     && cmp(((char*) base) + size * left, 
@@ -325,7 +328,6 @@ void stable_sort(void* base, size_t num, size_t size, int (*comparator)(const vo
         return;
     }
     
-    merge_passes = get_number_of_merge_passes(run_length_queue_size(queue));
     buffer = malloc(num * size);
     
     if (!buffer)
@@ -333,6 +335,19 @@ void stable_sort(void* base, size_t num, size_t size, int (*comparator)(const vo
         qsort(base, num, size, comparator);
         return;
     }
+    
+    queue = build_run_length_queue(base, num, size, comparator);
+    puts("Yo!");
+    
+    if (!queue) 
+    {
+        /* Cannot allocate the run length queue. Resort to qsort and possibly 
+           fail in the same manner as qsort. */
+        qsort(base, num, size, comparator);
+        return;
+    }
+    
+    merge_passes = get_number_of_merge_passes(run_length_queue_size(queue));
     
     if ((merge_passes & 1) == 1) 
     {
@@ -344,16 +359,6 @@ void stable_sort(void* base, size_t num, size_t size, int (*comparator)(const vo
     {
         source = base;
         target = buffer;
-    }
-    
-    queue = build_run_length_queue(base, num, size, comparator);
-    
-    if (!queue) 
-    {
-        /* Cannot allocate the run length queue. Resort to qsort and possibly 
-           fail in the same manner as qsort. */
-        qsort(base, num, size, comparator);
-        return;
     }
     
     offset = 0;
