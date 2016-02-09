@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include "map.h"
 #include "set.h"
@@ -1179,7 +1180,6 @@ static void test_fibonacci_heap_performance()
 
 static int int_compare(const void* a, const void* b)
 {
-    printf("a: %d, b: %d\n", *(int*) a, *(int*) b);
     return (*(int*) a - *(int*)b);
 }
 
@@ -1201,6 +1201,21 @@ static bool is_sorted(void* base,
     return true;
 }
 
+static bool int_arrays_are_equal(int* arr1, int* arr2, size_t num)
+{
+    size_t i;
+    
+    for (i = 0; i < num; ++i) 
+    {
+        if (arr1[i] != arr2[i])
+        {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
 static int* alloc_int_array(size_t size)
 {
     return malloc(sizeof(int) * size);
@@ -1211,8 +1226,7 @@ static int* get_random_integer_array(size_t size)
     size_t i;
     int* array = alloc_int_array(size);
     
-//    srand(time(NULL));
-    srand(5);
+    srand(time(NULL));
     
     for (i = 0; i < size; ++i) 
     {
@@ -1222,7 +1236,20 @@ static int* get_random_integer_array(size_t size)
     return array;
 }
 
-static int copy_integer_array(int* array, size_t num)
+static int* get_presorted_integer_array(size_t num, size_t run_length)
+{
+    size_t i;
+    int* array = malloc(sizeof(int) * num);
+    
+    for (i = 0; i < num; ++i) 
+    {
+        array[i] = run_length - i % run_length;
+    }
+    
+    return array;
+}
+
+static int* copy_integer_array(int* array, size_t num)
 {
     int* copy = alloc_int_array(num);
     memcpy(copy, array, sizeof(int) * num);
@@ -1233,9 +1260,8 @@ static void test_stable_sort()
 {
     clock_t t;
     double duration;
-    const size_t ARRAY_SIZE = 9;
-    int array1[] = { -5, 3, -3, 1, 8, 9, 4, 3, 7 };
-//    int* array1 = get_random_integer_array(ARRAY_SIZE);
+    const size_t ARRAY_SIZE = 1000 * 1000;
+    int* array1 = get_random_integer_array(ARRAY_SIZE);
     int* array2 = copy_integer_array(array1, ARRAY_SIZE);
     
     t = clock();
@@ -1249,10 +1275,13 @@ static void test_stable_sort()
     t = clock();
     stable_sort(array2, ARRAY_SIZE, sizeof(int), int_compare);
     duration = (double) clock() - t;
-//    
-//    printf("stable_sort in %f milliseconds. Sorted: %d.", 
-//           duration / CLOCKS_PER_SEC,
-//           is_sorted(array2, ARRAY_SIZE, sizeof(int), int_compare));
+    
+    printf("stable_sort in %f milliseconds. Sorted: %d.\n", 
+           duration / CLOCKS_PER_SEC,
+           is_sorted(array2, ARRAY_SIZE, sizeof(int), int_compare));
+    
+    printf("Arrays equal: %d\n", 
+           int_arrays_are_equal(array1, array2, ARRAY_SIZE));
 }
 
 int main(int argc, char** argv) {

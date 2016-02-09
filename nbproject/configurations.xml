@@ -52,7 +52,7 @@
       </toolsSet>
       <compileType>
         <cTool>
-          <commandLine>-ansi -pedantic -Wno-int-to-void-pointer-cast -Wno-int-conversion</commandLine>
+          <commandLine>-O3 -ansi -pedantic -Wno-int-to-void-pointer-cast -Wno-int-conversion</commandLine>
         </cTool>
       </compileType>
       <item path="fibonacci_heap.c" ex="false" tool="0" flavor2="0">
