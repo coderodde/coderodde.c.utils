@@ -158,8 +158,7 @@ static void fix_after_modification(map* p_map,
         {
             grand_parent = parent->parent;
 
-            if (height(parent->left->left) > 
-                height(parent->left->right)) 
+            if (height(parent->left->left) >= height(parent->left->right)) 
             {
                 sub_tree = right_rotate(parent);
             }
@@ -198,8 +197,7 @@ static void fix_after_modification(map* p_map,
         {
             grand_parent = parent->parent;
 
-            if (height(parent->right->right) > 
-                height(parent->right->left)) 
+            if (height(parent->right->right) >= height(parent->right->left)) 
             {
                 sub_tree = left_rotate(parent);
             }

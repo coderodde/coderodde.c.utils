@@ -559,6 +559,9 @@ void test_set_correctness()
     ASSERT(set_remove   (p_set, (void*) 10));
     ASSERT(set_contains (p_set, (void*) 10) == false);
     
+    set_clear(p_set);
+    
+    set_free(p_set);
 }
 
 void test_unordered_set_correctness() 
@@ -1261,7 +1264,7 @@ static void test_stable_sort()
     clock_t t;
     double duration;
     const size_t ARRAY_SIZE = 10 * 1000 * 1000;
-    int* array1 = get_random_integer_array(ARRAY_SIZE);
+    int* array1 = get_presorted_integer_array(ARRAY_SIZE, 200000);
     int* array2 = copy_integer_array(array1, ARRAY_SIZE);
     
     t = clock();
@@ -1294,11 +1297,11 @@ int main(int argc, char** argv) {
 //    test_unordered_set_correctness();
 //    test_unordered_set_performance();
 //    
-//    test_map_correctness();
-//    test_map_performance();
-//    
-//    test_set_correctness();
-//    test_set_performance();
+    test_map_correctness();
+    test_map_performance();
+    
+    test_set_correctness();
+    test_set_performance();
 //    
 //    test_heap_correctness();
 //    test_heap_performance();
@@ -1306,7 +1309,7 @@ int main(int argc, char** argv) {
 //    test_fibonacci_heap_correctness();
 //    test_fibonacci_heap_performance(); 
     
-    test_stable_sort();
+//    test_stable_sort();
     
     return (EXIT_SUCCESS);
 }

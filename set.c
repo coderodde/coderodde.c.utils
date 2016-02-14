@@ -150,7 +150,7 @@ static void fix_after_modification(set* my_set,
         {
             grand_parent = parent->parent;
 
-            if (height(parent->left->left) > height(parent->left->right)) 
+            if (height(parent->left->left) >= height(parent->left->right)) 
             {
                 sub_tree = right_rotate(parent);
             }
@@ -189,7 +189,7 @@ static void fix_after_modification(set* my_set,
         {
             grand_parent = parent->parent;
 
-            if (height(parent->right->right) > height(parent->right->left)) 
+            if (height(parent->right->right) >= height(parent->right->left)) 
             {
                 sub_tree = left_rotate(parent);
             }
@@ -236,18 +236,14 @@ static void fix_after_modification(set* my_set,
 *******************************************************************************/
 static bool insert(set* my_set, void* element) 
 {
-    set_entry* new_entry = set_entry_alloc(element);
+    set_entry* new_entry;
     set_entry* x;
     set_entry* parent;
-
-    if (!new_entry) 
-    {
-        return false;
-    }
+    int cmp;
     
     if (!my_set->root)
     {
-        my_set->root = new_entry;
+        my_set->root = set_entry_alloc(element);
         my_set->size++;
         my_set->mod_count++;
         return true;
@@ -260,19 +256,22 @@ static bool insert(set* my_set, void* element)
     {
         parent = x;
 
-        if (my_set->comparator(new_entry->element, x->element) < 0)
+        if ((cmp = my_set->comparator(element, x->element)) < 0)
         {
             x = x->left;
         }
-        else
+        else if (cmp > 0) 
         {
             x = x->right;
+        } else {
+            return false;
         }
     }
 
+    new_entry = set_entry_alloc(element);
     new_entry->parent = parent;
 
-    if (my_set->comparator(new_entry->element, parent->element) < 0) 
+    if (my_set->comparator(element, parent->element) < 0) 
     {
         parent->left = new_entry;
     }
@@ -480,11 +479,6 @@ set* set_alloc(int (*comparator)(void*, void*))
 bool set_add(set* my_set, void* element)
 {
     if (!my_set)            
-    {
-        return false;
-    }
-    
-    if (find_entry(my_set, element))
     {
         return false;
     }
