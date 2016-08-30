@@ -25,6 +25,12 @@ static bool assert(bool cond, char* err_msg, char* file_name, int line)
     return cond;
 }
 
+
+static int int_cmp(const void* a, const void* b)
+{
+    return (*(int*) a) - (*(int*) b);
+}
+
 static int int_comparator(void* a, void* b) 
 {
     return (int) a - (int) b;
@@ -1181,11 +1187,6 @@ static void test_fibonacci_heap_performance()
     printf("Duration: %f seconds.\n", duration / CLOCKS_PER_SEC);
 }
 
-static int int_compare(const void* a, const void* b)
-{
-    return (*(int*) a - *(int*)b);
-}
-
 static bool is_sorted(void* base,
                       size_t num, 
                       size_t size, 
@@ -1263,53 +1264,86 @@ static void test_stable_sort()
 {
     clock_t t;
     double duration;
+    
     const size_t ARRAY_SIZE = 10 * 1000 * 1000;
-    int* array1 = get_presorted_integer_array(ARRAY_SIZE, 200000);
+    const size_t RUNS = 4;
+    
+    int* array1 = get_presorted_integer_array(ARRAY_SIZE, RUNS);
     int* array2 = copy_integer_array(array1, ARRAY_SIZE);
     
-    t = clock();
-    qsort(array1, ARRAY_SIZE, sizeof(int), int_compare);
-    duration = (double) clock() - t;
-    
-    printf("qsort in %f milliseconds. Sorted: %d.\n", 
-           duration / CLOCKS_PER_SEC,
-           is_sorted(array1, ARRAY_SIZE, sizeof(int), int_compare));
+    puts("--- stable_sort ---");
+    puts("- Presorted array -");
     
     t = clock();
-    stable_sort(array2, ARRAY_SIZE, sizeof(int), int_compare);
+    qsort(array1, ARRAY_SIZE, sizeof(int), int_cmp);
     duration = (double) clock() - t;
     
-    printf("stable_sort in %f milliseconds. Sorted: %d.\n", 
+    printf("qsort in %f seconds. Sorted: %d.\n", 
            duration / CLOCKS_PER_SEC,
-           is_sorted(array2, ARRAY_SIZE, sizeof(int), int_compare));
+           is_sorted(array1, ARRAY_SIZE, sizeof(int), int_cmp));
     
-    printf("Arrays equal: %d\n", 
-           int_arrays_are_equal(array1, array2, ARRAY_SIZE));
+    t = clock();
+    stable_sort(array2, ARRAY_SIZE, sizeof(int), int_cmp);
+    duration = (double) clock() - t;
+    
+    printf("stable_sort in %f seconds. Sorted: %d.\n", 
+           duration / CLOCKS_PER_SEC,
+           is_sorted(array2, ARRAY_SIZE, sizeof(int), int_cmp));
+       
+    bool eq = int_arrays_are_equal(array1, array2, ARRAY_SIZE);
+    printf("Arrays equal: %d\n", eq);
+    ASSERT(eq);
+    
+    /** Profiling on random integer array *************************************/
+    
+    puts("- Random array -");
+    
+    array1 = get_random_integer_array(ARRAY_SIZE);
+    array2 = copy_integer_array(array1, ARRAY_SIZE);
+    
+    t = clock();
+    qsort(array1, ARRAY_SIZE, sizeof(int), int_cmp);
+    duration = (double) clock() - t;
+    
+    printf("qsort in %f seconds. Sorted: %d.\n", 
+           duration / CLOCKS_PER_SEC,
+           is_sorted(array1, ARRAY_SIZE, sizeof(int), int_cmp));
+    
+    t = clock();
+    stable_sort(array2, ARRAY_SIZE, sizeof(int), int_cmp);
+    duration = (double) clock() - t;
+    
+    printf("stable_sort in %f seconds. Sorted: %d.\n", 
+           duration / CLOCKS_PER_SEC,
+           is_sorted(array2, ARRAY_SIZE, sizeof(int), int_cmp));
+    
+    eq = int_arrays_are_equal(array1, array2, ARRAY_SIZE);
+    printf("Arrays equal: %d\n", eq);
+    ASSERT(eq);
 }
 
 int main(int argc, char** argv) {
-//    test_list_correctness();
-//    test_list_performance();
-//    
-//    test_unordered_map_correctness();
-//    test_unordered_map_performance();
-//    
-//    test_unordered_set_correctness();
-//    test_unordered_set_performance();
-//    
+    test_list_correctness();
+    test_list_performance();
+    
+    test_unordered_map_correctness();
+    test_unordered_map_performance();
+    
+    test_unordered_set_correctness();
+    test_unordered_set_performance();
+    
     test_map_correctness();
     test_map_performance();
     
     test_set_correctness();
     test_set_performance();
-//    
-//    test_heap_correctness();
-//    test_heap_performance();
-//    
-//    test_fibonacci_heap_correctness();
-//    test_fibonacci_heap_performance(); 
     
-//    test_stable_sort();
+    test_heap_correctness();
+    test_heap_performance();
     
+    test_fibonacci_heap_correctness();
+    test_fibonacci_heap_performance();
+    
+    test_stable_sort();
     return (EXIT_SUCCESS);
 }
