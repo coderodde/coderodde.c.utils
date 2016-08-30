@@ -12,7 +12,7 @@ The main aim of this project is to provide implementations of most fundamental d
 - [x] `list` (an array based list supporting fast insertion/removal from both ends)
 
 ### POSSIBLY:
-- [ ] `stable_sort` (a natural merge sort)
-- [ ] `parallel_stable_sort` (a parallel natural merge sort)
+- [x] `stable_sort` (a natural merge sort)
+- [ ] `parallel_stable_sort` (a parallel natural merge sort) - provided that the future versions of C library include portable thread facilities.
 - [ ] `integer_sort` (a radix sort)
-- [ ] `parallel_integer_sort` (a parallel radix sort)
+- [ ] `parallel_integer_sort` (a parallel radix sort) - provided that the future versions of C library include portable thread facilities.
